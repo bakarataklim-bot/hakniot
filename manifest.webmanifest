@@ -1,0 +1,11 @@
+{
+  "name":"דואגים יחד",
+  "short_name":"דואגים יחד",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#f4f7fb",
+  "theme_color":"#1976d2",
+  "icons":[
+    {"src":"/icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
