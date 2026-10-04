@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1976d2">
+<title>Рабочие часы · Наргиза</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#17212b;font-family:Arial,Helvetica,sans-serif}.wrap{max-width:620px;margin:auto;padding:14px 14px 36px}.head{background:#1976d2;color:#fff;border-radius:0 0 20px 20px;padding:18px;margin:-14px -14px 14px;text-align:center}.head h1{font-size:24px;margin:0 0 5px}.head small{opacity:.92}.card{background:#fff;border:1px solid #dce6ef;border-radius:18px;padding:14px;box-shadow:0 2px 10px #0000000e;margin:12px 0}.intro{background:#eef7ff;border:1px solid #bdd8f2;line-height:1.62}label{display:block;font-weight:800;margin:10px 0 5px}input,select,textarea{width:100%;font:inherit;padding:12px;border:1px solid #cbd5df;border-radius:11px;background:#fff}.seg{background:#f8fafc;border:1px solid #dfe6ed;border-radius:14px;padding:11px;margin:9px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}button{font:inherit;font-weight:900;border:0;border-radius:12px;padding:12px 14px;cursor:pointer}.primary{background:#1976d2;color:#fff;width:100%}.secondary{background:#edf2f7;color:#17212b;width:100%;margin-top:8px}.danger{background:#fff0f0;color:#9c1c1c;width:100%;margin-top:8px}.total{background:#e8f5e9;border-radius:13px;padding:12px;font-weight:900;margin:12px 0}.status{background:#fff8e1;border:1px solid #ead28a;border-radius:13px;padding:11px;margin:10px 0}.ok{background:#e8f5e9;border-color:#a9d9b6}.he{direction:rtl;text-align:right;color:#5d6b78;font-size:13px;margin-top:4px}.hidden{display:none!important}.tiny{font-size:12px;color:#6f7c88;line-height:1.45}@media(max-width:430px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="head"><h1>⏱️ Рабочие часы</h1><small>Ежедневный отчёт · דיווח שעות יומי</small></div>
+<div id="badLink" class="card status hidden">Ссылка недействительна. Попросите Андри прислать новую ссылку.<div class="he">הקישור אינו תקין. בקשי מאנדרי קישור חדש.</div></div>
+<div id="formArea">
+<div class="card intro">
+<b>Учёт рабочего времени вне дома</b><br><br>
+Когда работа проходит дома, действует обычный режим работы.<br><br>
+Когда ты работаешь вне дома, например в больнице, записывай все рабочие часы с начала работы утром и до окончания дня. Первые 8 часов уже входят в базовую месячную зарплату и не дают дополнительной оплаты. Следующие 2 часа оплачиваются дополнительно по 44 ₪ за час, а все последующие часы — по 53 ₪ за час.<br><br>
+Если рабочий день разделён на несколько частей, нужно записать каждую часть отдельно. Например: 08:00 — вход в больницу, 12:00 — выход; 14:00 — снова вход, 18:00 — выход.<br><br>
+Указывай точное время каждого входа и выхода. В конце дня проверь данные и подтверди, что часы указаны правильно. Каждый день сохраняется отдельно для учёта и расчёта зарплаты.
+<div class="he">כאשר את עובדת מחוץ לבית, למשל בבית חולים, רשמי את כל שעות העבודה מתחילת היום ועד הסיום. אם היום מפוצל — כל מקטע נרשם בנפרד. 8 השעות הראשונות כלולות בשכר הבסיס; 2 השעות הנוספות הראשונות מחושבות ב־44 ₪ לשעה, וכל שעה נוספת אחריהן ב־53 ₪. בסוף היום מאשרים ושומרים.</div>
+</div>
+<div class="card">
+<label>Дата / תאריך<input id="date" type="date"></label>
+<label>Место работы / מקום<select id="place"><option value="hospital">Больница / בית חולים</option><option value="outside">Другое место вне дома / מקום אחר מחוץ לבית</option></select></label>
+<div id="segments"></div>
+<button id="add" class="secondary" type="button">➕ Добавить ещё вход и выход / הוסף כניסה ויציאה</button>
+<div id="total" class="total">Всего: 0 ч. 00 мин.</div>
+<label>Примечание (необязательно) / הערה<textarea id="note" rows="2" placeholder="Например: работа в больнице"></textarea></label>
+<div id="status" class="status hidden"></div>
+<label style="display:flex;gap:8px;align-items:flex-start;font-weight:700"><input id="confirm" type="checkbox" style="width:auto;margin-top:3px"> <span>Я проверила часы и подтверждаю, что они указаны правильно.<div class="he">בדקתי את השעות ואני מאשרת שהן נכונות.</div></span></label>
+<button id="send" class="primary" type="button">✅ Подтверждаю и отправляю / מאשרת ושולחת</button>
+<button id="wa" class="secondary hidden" type="button">📲 Отправить подтверждение в WhatsApp</button>
+<div class="tiny" style="margin-top:10px">Отчёт автоматически сохраняется в системе семьи. После отправки Андри сможет проверить его и утвердить для расчёта зарплаты.</div>
+</div></div></div>
+<script>
+const GROUP='241361';
+const TOKEN="wh_Jw0tMitbrBarlS8tLk7trcRPGf4APrzB";
+const BASE='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/workHours';
+const $=id=>document.getElementById(id);
+const qp=new URLSearchParams(location.search);
+function localDate(){const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
+function validLink(){return qp.get('k')===TOKEN}
+function mins(a,b){if(!a||!b)return 0;const [ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);let n=(bh*60+bm)-(ah*60+am);if(n<0)n+=1440;return n}
+function rows(){return [...document.querySelectorAll('.seg')].map(x=>({start:x.querySelector('[data-start]').value,end:x.querySelector('[data-end]').value})).filter(x=>x.start||x.end)}
+function totalMinutes(){return rows().reduce((n,x)=>n+mins(x.start,x.end),0)}
+function fmt(n){n=Math.max(0,Math.round(n||0));return Math.floor(n/60)+' ч. '+String(n%60).padStart(2,'0')+' мин.'}
+function updateTotal(){$('total').textContent='Всего / סה״כ: '+fmt(totalMinutes())}
+function addRow(v={}){const d=document.createElement('div');d.className='seg';d.innerHTML='<div class="grid"><label>Вход / כניסה<input data-start type="time"></label><label>Выход / יציאה<input data-end type="time"></label></div><button type="button" class="danger">✕ Удалить этот промежуток / מחק מקטע</button>';d.querySelector('[data-start]').value=v.start||'';d.querySelector('[data-end]').value=v.end||'';d.querySelectorAll('input').forEach(i=>i.addEventListener('input',updateTotal));d.querySelector('button').onclick=()=>{const all=document.querySelectorAll('.seg');if(all.length>1)d.remove();else{d.querySelector('[data-start]').value='';d.querySelector('[data-end]').value=''}updateTotal()};$('segments').appendChild(d);updateTotal()}
+function setRows(a){$('segments').innerHTML='';(Array.isArray(a)&&a.length?a:[{}]).forEach(addRow)}
+function setReportLocked(locked){$('send').disabled=!!locked;$('confirm').disabled=!!locked;document.querySelectorAll('#segments input,#place,#note,#add,.danger').forEach(e=>e.disabled=!!locked);$('send').textContent=locked?'✅ Отчёт отправлен / הדיווח נשלח':'✅ Подтверждаю и отправляю / מאשרת ושולחת'}
+async function loadDate(){const date=$('date').value;if(!date)return;try{const r=await fetch(BASE+'/'+encodeURIComponent(date)+'.json?ts='+Date.now(),{cache:'no-store'}),j=await r.json();if(j){setRows(j.segments||[]);$('place').value=j.place||'hospital';$('note').value=j.note||'';$('status').classList.remove('hidden');$('status').classList.toggle('ok',j.status==='approved');const locked=j.status==='approved'||j.status==='submitted';$('status').innerHTML=j.status==='approved'?'✅ Этот день уже утверждён Андри. Изменить его нельзя.<div class="he">היום הזה כבר אושר על ידי אנדרי ולא ניתן לשנות אותו.</div>':j.status==='submitted'?'✅ Отчёт за этот день уже отправлен Андри.<div class="he">הדיווח של היום כבר נשלח לאנדרי.</div>':'📝 Отчёт возвращён на исправление. Исправьте часы и отправьте снова.<div class="he">הדיווח הוחזר לתיקון. אפשר לתקן ולשלוח שוב.</div>';setReportLocked(locked)}else{setRows([{}]);$('place').value='hospital';$('note').value='';$('status').classList.add('hidden');setReportLocked(false);$('confirm').checked=false}}catch(e){console.warn(e)}}
+function reportText(date,segs,place,total){return '⏱️ Отчёт рабочих часов / דיווח שעות\n📅 '+date+'\n📍 '+(place==='hospital'?'Больница / בית חולים':'Вне дома / מחוץ לבית')+'\n'+segs.map(x=>x.start+'–'+x.end).join('\n')+'\nВсего / סה״כ: '+fmt(total)+'\n✅ Наргиза подтвердила часы / נרגיזה אישרה את השעות'}
+let lastText='';
+async function send(){if(!validLink())return;const date=$('date').value,segs=rows();if(!date)return alert('Выберите дату / בחרי תאריך');if(!segs.length)return alert('Укажите время входа и выхода / הזיני כניסה ויציאה');for(const x of segs){if(!x.start||!x.end)return alert('Для каждого промежутка укажите вход и выход / בכל מקטע יש להזין כניסה ויציאה');if(mins(x.start,x.end)<=0)return alert('Проверьте время / בדקי את השעות')}if(!$('confirm').checked)return alert('Подтвердите, что часы верны / אשרי שהשעות נכונות');const total=totalMinutes(),place=$('place').value,note=$('note').value.trim(),payload={date,segments:segs,outsideMinutes:total,reportedMinutes:total,place,placeLabelRu:place==='hospital'?'Больница':'Другое место вне дома',note,caregiverConfirmed:true,caregiverNameHe:'נרגיזה',caregiverNameRu:'Наргиза',status:'submitted',submittedAt:Date.now(),updatedAt:Date.now(),schemaVersion:4,totalMinutes:total,source:'whatsapp-hours-v4'};const b=$('send'),old=b.textContent;b.disabled=true;b.textContent='Сохраняю... / שומר...';try{const r=await fetch(BASE+'/'+encodeURIComponent(date)+'.json',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw Error('HTTP '+r.status);fetch('/api/notify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:GROUP,kind:'work_hours_report'})}).catch(()=>{});lastText=reportText(date,segs,place,total);$('status').className='status ok';$('status').innerHTML='✅ Отчёт сохранён и отправлен Андри.<div class="he">הדיווח נשמר ונשלח לאנדרי.</div>';$('wa').classList.remove('hidden');setReportLocked(true)}catch(e){console.error(e);alert('Не удалось отправить. Проверьте интернет. / לא ניתן לשלוח. בדקי אינטרנט.');b.disabled=false;b.textContent=old}}
+function wa(){if(!lastText)lastText=reportText($('date').value,rows(),$('place').value,totalMinutes());location.href='https://wa.me/?text='+encodeURIComponent(lastText)}
+if(!validLink()){$('formArea').classList.add('hidden');$('badLink').classList.remove('hidden')}else{$('date').value=localDate();setRows([{}]);$('date').addEventListener('change',loadDate);$('add').onclick=()=>addRow();$('send').onclick=send;$('wa').onclick=wa;loadDate()}
+</script>
+</body></html>
