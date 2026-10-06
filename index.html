@@ -178,7 +178,7 @@ body.naomi-review .wrap{max-width:760px}
   </div>
 </div>
 
-<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.6 · תיקון ענן + התראות + גיבוי מקומי</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
+<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.7 · תיקון התראות + בדיקת ענן</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
 <main class="wrap">
 <div id="livePresenceStrip" class="liveStrip hidden" aria-live="polite"><span class="liveTitle">👥 מחוברים עכשיו:</span><span id="livePresenceChips" class="liveEmpty">בודק...</span><button id="activityAdminBtn" class="activityAdminBtn hidden" type="button">📋 יומן פעילות</button></div>
 <div id="activityOverlay" class="activityOverlay hidden" aria-hidden="true" dir="rtl"><div class="activityTop"><b>📋 פעילות היום</b><button id="activityClose" class="secondary" type="button">✕ חזרה</button></div><div id="activitySummary" class="activitySummary"></div><div class="activityActions"><button id="activityRefresh" class="activityRefresh" type="button">↻ רענן</button><button id="activityDelete" class="activityDelete" type="button">🗑️ מחק יומן היום</button></div><div id="activityLog" class="activityLog"><div class="activityRow"><div></div><div></div><div>טוען...</div></div></div></div>
@@ -553,8 +553,8 @@ const firebaseConfig = {
   appId: "1:254319747029:web:6331f000db6c9cc56e675c",
   measurementId: "G-KFX9H9W77L"
 };
-const APP_VERSION='206.6-cloud-push-fix';
-const VAPID_PUBLIC_KEY='BNZzY9PHLZxKG6-zwSoJZAYUX1SBuaodGupq1N_PnBuZw2oX4SlH4ldUrSFFDp64hNu2ME0YkKbO2t5DPKdGFAQ';
+const APP_VERSION='206.7-vapid-firebase-diag';
+const VAPID_PUBLIC_KEY='BDg1h6g6UPqPPSwoWJrT5HXI7RXwgxkpEWgPX6pBCihcqcfGUbv_FGUug57jtd6B4Vv2V5kp4Yrx3MjDllCS3GA';
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const FAMILY_USERS={
@@ -787,7 +787,22 @@ async function savePushSubscription(subscription,code=shareCode){
 function pushKeyMatches(sub){try{const key=sub?.options?.applicationServerKey;if(!key)return false;const a=new Uint8Array(key),b=urlBase64ToUint8Array(VAPID_PUBLIC_KEY);if(a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true}catch(e){return false}}
 async function ensureCurrentPushSubscription(){const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(sub&&!pushKeyMatches(sub)){try{await sub.unsubscribe()}catch(e){}sub=null}if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});return sub}
 async function syncPushSubscription(){try{if(!('Notification' in window)||Notification.permission!=='granted'||!db||!shareCode)return;const sub=await ensureCurrentPushSubscription();if(sub){await savePushSubscription(sub);setPushState('✓ התראות פעילות במכשיר הזה.',true)}}catch(e){console.warn('push sync',e);setPushState('יש לאשר מחדש התראות במכשיר הזה.',false)}}
-async function enablePush(){try{if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('המכשיר או הדפדפן הזה לא תומך בהתראות Push.');return}if(!shareCode){alert('קודם התחבר לרשימה משותפת.');return}const permission=await Notification.requestPermission();if(permission!=='granted'){setPushState('ההתראות חסומות. אפשר לאשר אותן בהגדרות האתר.');return}const sub=await ensureCurrentPushSubscription();await savePushSubscription(sub);setPushState('✓ התראות פעילות במכשיר הזה.',true);alert('התראות הופעלו ✓')}catch(e){console.error('enable push',e);setPushState('לא הצלחתי להפעיל התראות.');alert('לא הצלחתי להפעיל התראות. נסה שוב.')}}
+async function enablePush(){try{
+  if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('המכשיר או הדפדפן הזה לא תומך בהתראות Push.');return}
+  if(!shareCode){alert('קודם התחבר לרשימה משותפת.');return}
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){setPushState('ההתראות חסומות. אפשר לאשר אותן בהגדרות האתר.');return}
+  setPushState('⏳ מפעיל התראות...');
+  const sub=await ensureCurrentPushSubscription();
+  await savePushSubscription(sub);
+  setPushState('✓ התראות פעילות במכשיר הזה.',true);
+  alert('התראות הופעלו ✓')
+}catch(e){
+  console.error('enable push',e);
+  const msg=String(e?.message||e||'');
+  setPushState('לא הצלחתי להפעיל התראות: '+msg.slice(0,90));
+  alert('לא הצלחתי להפעיל התראות. '+(msg?('פרטים: '+msg.slice(0,120)):'נסה שוב.'))
+}}
 async function sendSharedPush(payload){try{const res=await fetch('/api/notify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...payload,code:shareCode,senderId:clientId})});if(!res.ok)console.warn('push notify failed',await res.text());return res}catch(e){console.warn('push notify network',e);return null}}
 async function testPush(){try{if(!('Notification' in window)){alert('המכשיר או הדפדפן הזה לא תומך בהתראות Push.');return}if(Notification.permission!=='granted')await enablePush();if(Notification.permission!=='granted')return;const res=await fetch('/api/notify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'test',code:shareCode,senderId:'__test_other__',targetId:clientId})});if(!res.ok)throw new Error(await res.text());setPushState('✓ נשלחה התראת בדיקה. אם לא הופיעה תוך כמה שניות, נבדוק הרשאות.',true)}catch(e){console.error('test push',e);alert('לא הצלחתי לשלוח התראת בדיקה.')}}
 let lastWhatsAppText='';
