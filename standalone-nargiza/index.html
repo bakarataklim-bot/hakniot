@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d72d8">
+<title>תיק נרגיזה</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#172235;background:#eef3f8}
+*{box-sizing:border-box}body{margin:0;background:#eef3f8}.app{max-width:860px;margin:auto;min-height:100vh;background:#f7f9fc}
+header{background:linear-gradient(135deg,#1475de,#61a8ef);color:#fff;padding:18px 16px 16px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px #0002}
+.headrow{display:flex;align-items:center;justify-content:space-between;gap:10px}.title{font-size:24px;font-weight:900}.sub{opacity:.95;font-size:13px}.version{font-size:12px;background:#ffffff2e;border:1px solid #ffffff66;border-radius:999px;padding:5px 9px;white-space:nowrap}
+main{padding:12px 12px 90px}.card{background:#fff;border:1px solid #dfe7f0;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px #2030400d}
+.employee{background:#eef7ff;border-color:#bddcf7;line-height:1.7}.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{border:1px solid #cbd8e7;background:#fff;color:#26415f;border-radius:12px;padding:9px 12px;font-weight:800;white-space:nowrap}.tab.active{background:#1d72d8;color:#fff;border-color:#1d72d8}
+.pane.hidden,.hidden{display:none!important}h2,h3{margin:4px 0 10px}.note{background:#f5f8fb;border:1px solid #dae4ee;border-radius:12px;padding:10px;line-height:1.55;font-size:14px}.ok{background:#eefaf1;border-color:#b9e0c0}.warn{background:#fff8e7;border-color:#f1d38c}.danger{background:#fff1f1;border-color:#efb9b9}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wide{grid-column:1/-1}label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:800;color:#30445a}
+input,select,textarea{width:100%;font:inherit;border:1px solid #cbd7e5;border-radius:10px;padding:10px;background:#fff;color:#172235}input[readonly]{background:#f4f6f8}
+button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13px;cursor:pointer}.primary{background:#1d72d8;color:#fff}.secondary{background:#eef3f8;color:#23405e;border:1px solid #ced9e5}.dangerBtn{background:#fff0f0;color:#b42318;border:1px solid #f3c3c0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1;min-width:145px}.total{display:flex;justify-content:space-between;align-items:center;background:#eaf4ff;border:1px solid #b9d8f8;border-radius:14px;padding:12px 14px;margin-top:12px}.total b{font-size:25px;color:#1262b8}
+.row{border:1px solid #dce5ef;border-radius:12px;padding:10px;margin:8px 0;background:#fff}.rowTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.amount{font-size:18px;font-weight:900;color:#1262b8}.muted{color:#6c7d8e;font-size:13px}.status{display:inline-block;border-radius:999px;padding:3px 7px;font-size:12px;font-weight:800;background:#edf2f7}.status.approved{background:#e9f8ed;color:#16753a}
+.backupBadge{display:inline-flex;align-items:center;gap:5px;background:#eefaf1;border:1px solid #b9e0c0;color:#196b38;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}
+.bottomState{position:fixed;bottom:0;left:0;right:0;z-index:15;background:#fff;border-top:1px solid #d8e2ec;padding:8px 12px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px #0001}
+.bottomInner{max-width:860px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.bottomInner small{color:#596c80}.savePulse{color:#14783c;font-weight:900}
+.fileLabel{display:block;border:1px dashed #9eb6cf;border-radius:12px;padding:14px;text-align:center;background:#f7fbff;cursor:pointer}.fileLabel input{display:none}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.title{font-size:21px}.card{border-radius:13px;padding:12px}.actions button{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.0 · עצמאי</div></div>
+</header>
+<main>
+  <section class="card employee">
+    <b>👩‍⚕️ פרטי העובדת</b><br>
+    <b>שם:</b> נרגיזה נג'מייבה / NARGIZA NAJMIEVA<br>
+    <b>תחילת עבודה:</b> 02.09.2026
+  </section>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-pane="month">💰 חודש</button>
+    <button class="tab" data-pane="hours">⏱️ שעות</button>
+    <button class="tab" data-pane="payments">✍️ תשלומים</button>
+    <button class="tab" data-pane="history">📚 חודשים</button>
+    <button class="tab" data-pane="archive">🗄️ ארכיון</button>
+    <button class="tab" data-pane="docs">📁 מסמכים</button>
+    <button class="tab" data-pane="rights">📋 זכויות</button>
+    <button class="tab" data-pane="backup">🛟 גיבוי</button>
+  </div>
+
+  <section class="pane" id="pane-month">
+    <div class="card">
+      <h3>💰 חישוב חודשי</h3>
+      <div class="grid">
+        <label>חודש<input id="month" type="month" value="2026-09"></label>
+        <label>שכר בסיס חודשי<input id="fullBase" type="number" step="0.01" value="6000"></label>
+        <label>שכר בסיס לחודש · אוטומטי<input id="base" type="number" readonly></label>
+        <label>שבתות / ימי מנוחה שעבדה<input id="weekends" type="number" min="0" step="1" value="0"></label>
+        <label>תוספת שבתות · אוטומטי<input id="weekendAmount" type="number" readonly></label>
+        <label>חגים שעבדה<input id="holidays" type="number" min="0" step="1" value="0"></label>
+        <label>תוספת חגים · אוטומטי<input id="holidayAmount" type="number" readonly></label>
+        <label>ימי חופשה שנוצלו<input id="vacation" type="number" min="0" step="0.5" value="0"></label>
+        <label>ימי מחלה<input id="sick" type="number" min="0" step="0.5" value="0"></label>
+        <label>תוספות אחרות ₪<input id="otherPlus" type="number" step="0.01" value="0"></label>
+        <label>שעות נוספות מאושרות<input id="otLabel" type="text" readonly value="0 שעות"></label>
+        <label>תוספת שעות נוספות ₪<input id="otAmount" type="number" readonly value="0"></label>
+        <label>ביטוח רפואי – ניכוי ₪<input id="medical" type="number" min="0" step="0.01" value="140.86"></label>
+        <label>ניכוי כלכלה ₪<input id="economy" type="number" min="0" step="0.01" value="0"></label>
+        <label>ניכויים / מקדמות אחרים ₪<input id="deductions" type="number" step="0.01" value="0"></label>
+        <label class="wide">הערות<textarea id="notes" rows="3" placeholder="למשל: שחזור חודש 09/2026, שבתות, חגים, מקדמות..."></textarea></label>
+      </div>
+      <div class="note" id="baseNote" style="margin-top:10px"></div>
+      <div class="note" style="margin-top:8px">🧮 שבת: 440 ₪ לכל שבת. שעות: 8 השעות הראשונות ביום כלולות בבסיס; שעות 9–10 ב־44 ₪ לשעה, ומהשעה ה־11 ב־53 ₪ לשעה.</div>
+      <div class="total"><span>סה״כ לתשלום</span><b id="total">₪0.00</b></div>
+      <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
+    </div>
+  </section>
+
+  <section class="pane hidden" id="pane-hours">
+    <div class="card">
+      <h3>⏱️ שחזור / הזנת שעות</h3>
+      <div class="note">אפשר להזין כמה מקטעים באותו יום. המערכת מחברת את כל המקטעים של אותו תאריך ומחשבת שעות נוספות רק לאחר אישור.</div>
+      <div class="grid" style="margin-top:10px">
+        <label>תאריך<input id="hourDate" type="date" value="2026-09-02"></label>
+        <label>התחלה<input id="hourStart" type="time"></label>
+        <label>סיום<input id="hourEnd" type="time"></label>
+        <label>הערה<input id="hourNote" type="text" placeholder="למשל: בית חולים / סידורים"></label>
+      </div>
+      <div class="actions"><button class="primary" id="addHour">➕ הוסף מקטע שעות</button></div>
+    </div>
+    <div class="card"><h3>דיווחים</h3><div id="hoursList"></div></div>
+  </section>
+
+  <section class="pane hidden" id="pane-payments">
+    <div class="card">
+      <h3>💵 תשלום חדש</h3>
+      <div class="grid">
+        <label>סכום ₪<input id="payAmount" type="number" min="0.01" step="0.01"></label>
+        <label>תאריך<input id="payDate" type="date"></label>
+        <label>סוג<select id="payType"><option value="advance">מקדמה</option><option value="salary">שכר</option><option value="weekend">שבת / מנוחה</option><option value="holiday">חג</option><option value="vacation">חופשה</option><option value="expense">החזר הוצאה</option><option value="other">אחר</option></select></label>
+        <label>אופן תשלום<select id="payMethod"><option value="cash">מזומן</option><option value="transfer">העברה בנקאית</option><option value="other">אחר</option></select></label>
+        <label class="wide">הערה<textarea id="payNote" rows="2"></textarea></label>
+      </div>
+      <div class="actions"><button class="primary" id="addPayment">💾 שמור תשלום</button></div>
+    </div>
+    <div class="card"><h3>📚 תשלומים שמורים</h3><div id="paymentsList"></div></div>
+  </section>
+
+  <section class="pane hidden" id="pane-history"><div class="card"><h3>📚 חודשים שמורים</h3><div id="historyList"></div></div></section>
+  <section class="pane hidden" id="pane-archive"><div class="card"><h3>🗄️ ארכיון גרסאות חודשיות</h3><div class="note">בכל שמירת חודש נשמר צילום מלא של החודש, השעות והתשלומים. אפשר לחזור לכל צילום קודם.</div><div id="archiveList" style="margin-top:10px"></div></div></section>
+
+  <section class="pane hidden" id="pane-docs">
+    <div class="card">
+      <h3>📁 מסמכים</h3>
+      <div class="grid">
+        <label>כותרת<input id="docTitle" type="text" placeholder="לדוגמה: הסכם עבודה"></label>
+        <label>סוג<select id="docType"><option>הסכם</option><option>דרכון</option><option>ביטוח רפואי</option><option>ביטוח לאומי</option><option>קבלה</option><option>אישור תשלום</option><option>אחר</option></select></label>
+        <label class="wide fileLabel">📎 בחר קובץ<input id="docFile" type="file"></label>
+      </div>
+      <div class="actions"><button class="primary" id="saveDoc">💾 שמור מסמך בטלפון</button></div>
+    </div>
+    <div class="card"><div id="docsList"></div></div>
+  </section>
+
+  <section class="pane hidden" id="pane-rights">
+    <div class="card">
+      <h3>📋 בסיס ההעסקה</h3>
+      <div class="row"><b>שכר בסיס:</b> 6,000 ₪ לחודש</div>
+      <div class="row"><b>תחילת עבודה:</b> 02/09/2026</div>
+      <div class="row"><b>מנוחה שבועית:</b> לפחות 25 שעות רצופות</div>
+      <div class="row"><b>חגים:</b> 9 ימי חג בתשלום בשנה, לפי הבחירה והכללים החלים</div>
+      <div class="row"><b>חופשה שנתית:</b> בשנות הוותק 1–5: 14 ימי חופשה שנתית</div>
+      <div class="row"><b>מחלה:</b> צבירה של 1.5 ימים לחודש, עד 90; יום ראשון ללא תשלום, ימים 2–3 50%, מהיום הרביעי 100%, בכפוף לכללים ואישור</div>
+      <div class="row"><b>הבראה:</b> לאחר השלמת שנת עבודה; בשנה הראשונה 5 ימים לפי דף הזכויות שנשמר בתיק</div>
+      <div class="note">המסך הוא כלי מעקב וחישוב. לפני תשלום זכויות חריגות יש לאמת את החישוב לפי ההסכם והדין המעודכן.</div>
+    </div>
+  </section>
+
+  <section class="pane hidden" id="pane-backup">
+    <div class="card">
+      <h3>🛟 גיבוי ושחזור</h3>
+      <div class="note ok">✅ כל שינוי נשמר מיד בטלפון ונוצרת גרסת Snapshot מקומית אוטומטית. האפליקציה אינה תלויה בענן כדי לפתוח את הנתונים.</div>
+      <div class="actions"><button class="primary" id="exportBackup">⬇️ הורד גיבוי מלא</button><button class="secondary" id="importBtn">⬆️ שחזר מגיבוי</button><input id="importFile" type="file" accept=".json,application/json" class="hidden"></div>
+      <div class="note warn" style="margin-top:10px">מומלץ להוריד גיבוי לקובץ אחרי סיום שחזור ספטמבר ובסוף כל חודש.</div>
+    </div>
+    <div class="card"><h3>🕘 גרסאות מקומיות אחרונות</h3><div id="snapshotsList"></div></div>
+  </section>
+</main>
+<div class="bottomState"><div class="bottomInner"><span class="backupBadge">📱 נשמר מקומית</span><small id="saveState">מוכן</small></div></div>
+</div>
+<script>
+(function(){
+'use strict';
+const VERSION='1.0-local-first';
+const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=140.86, OT1=44, OT2=53;
+const LS='tik-nargiza-data-v1';
+const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
+const $=id=>document.getElementById(id);
+const round2=n=>Math.round((Number(n||0)+Number.EPSILON)*100)/100;
+const money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const uid=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);
+let state=load();
+
+function fresh(){return {kind:'tik-nargiza',version:1,base:{startDate:START_DATE,monthly:DEFAULT_BASE},months:{},hours:[],payments:[],archives:[],updatedAt:Date.now()}}
+function load(){try{const x=JSON.parse(localStorage.getItem(LS)||'null');if(x&&x.kind==='tik-nargiza')return migrate(x)}catch(e){}return fresh()}
+function migrate(x){x.base=x.base||{startDate:START_DATE,monthly:DEFAULT_BASE};x.months=x.months||{};x.hours=Array.isArray(x.hours)?x.hours:[];x.payments=Array.isArray(x.payments)?x.payments:[];x.archives=Array.isArray(x.archives)?x.archives:[];return x}
+function persist(reason){
+  state.updatedAt=Date.now();localStorage.setItem(LS,JSON.stringify(state));
+  idbPut('snapshots',{id:uid(),savedAt:Date.now(),reason:reason||'change',data:JSON.parse(JSON.stringify(state))}).then(trimSnapshots).catch(()=>{});
+  const s=$('saveState');if(s){s.textContent='נשמר עכשיו ✓';s.className='savePulse';setTimeout(()=>{s.textContent='מוכן';s.className=''},1200)}
+}
+function idb(){
+  return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VER);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('snapshots'))d.createObjectStore('snapshots',{keyPath:'id'});if(!d.objectStoreNames.contains('docs'))d.createObjectStore('docs',{keyPath:'id'})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})
+}
+async function idbPut(store,val){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction(store,'readwrite');t.objectStore(store).put(val);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+async function idbDelete(store,id){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction(store,'readwrite');t.objectStore(store).delete(id);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+async function idbAll(store){const d=await idb();return new Promise((res,rej)=>{const r=d.transaction(store,'readonly').objectStore(store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
+async function trimSnapshots(){const a=(await idbAll('snapshots')).sort((a,b)=>b.savedAt-a.savedAt);for(const x of a.slice(50))await idbDelete('snapshots',x.id)}
+function proration(month,full){
+ const a=START_DATE.split('-').map(Number),b=String(month||'').split('-').map(Number);if(b.length<2)return {base:full,partial:false,total:0,worked:0};
+ const start=a[0]*12+a[1],cur=b[0]*12+b[1];if(cur<start)return {base:0,partial:true,total:0,worked:0};if(cur>start)return {base:round2(full),partial:false,total:0,worked:0};
+ const last=new Date(b[0],b[1],0).getDate();let total=0,worked=0;
+ for(let d=1;d<=last;d++){if(new Date(b[0],b[1]-1,d,12).getDay()===6)continue;total++;if(d>=a[2])worked++}
+ return {base:total?round2(full*worked/total):0,partial:true,total,worked}
+}
+function holidayRate(full){return round2((((Number(full||0)/25)+(Number(full||0)/182))*1.5))}
+function minBetween(start,end){if(!start||!end)return 0;const a=start.split(':').map(Number),b=end.split(':').map(Number);let s=a[0]*60+a[1],e=b[0]*60+b[1];if(e<s)e+=1440;return Math.max(0,e-s)}
+function approvedHoursForMonth(month){
+ const byDay={};state.hours.filter(x=>x.approved&&String(x.date).startsWith(month)).forEach(x=>{byDay[x.date]=(byDay[x.date]||0)+minBetween(x.start,x.end)});
+ let otMinutes=0,amount=0;Object.values(byDay).forEach(total=>{const ot=Math.max(0,total-480),m1=Math.min(120,ot),m2=Math.max(0,ot-120);otMinutes+=ot;amount+=OT1*m1/60+OT2*m2/60});
+ return {minutes:Math.round(otMinutes),amount:round2(amount)}
+}
+function minLabel(m){m=Math.max(0,Math.round(m||0));const h=Math.floor(m/60),mm=m%60;return h+(mm?':'+String(mm).padStart(2,'0'):'')+' שעות'}
+function calcForm(){
+ const month=$('month').value,full=Math.max(0,Number($('fullBase').value||0)),p=proration(month,full),wc=Math.max(0,Math.floor(Number($('weekends').value||0))),hc=Math.max(0,Math.floor(Number($('holidays').value||0))),ot=approvedHoursForMonth(month);
+ $('base').value=p.base.toFixed(2);$('weekendAmount').value=(WEEKEND_PAY*wc).toFixed(2);$('holidayAmount').value=(holidayRate(full)*hc).toFixed(2);$('otLabel').value=minLabel(ot.minutes);$('otAmount').value=ot.amount.toFixed(2);
+ $('baseNote').innerHTML=p.partial&&p.total?'🧮 חודש ראשון חלקי: <b>'+money(full)+' ÷ '+p.total+' ימים ללא שבת × '+p.worked+' ימים = '+money(p.base)+'</b>':'🧮 חודש מלא: שכר בסיס <b>'+money(p.base)+'</b>';
+ const total=round2(p.base+WEEKEND_PAY*wc+holidayRate(full)*hc+Number($('otherPlus').value||0)+ot.amount-Number($('medical').value||0)-Number($('economy').value||0)-Number($('deductions').value||0));
+ $('total').textContent=money(total);return {month,fullMonthlyBase:full,base:p.base,baseProrated:p.partial,baseTotalNonSaturday:p.total,baseWorkedNonSaturday:p.worked,weekendsCount:wc,weekendsAmount:round2(WEEKEND_PAY*wc),holidaysCount:hc,holidaysAmount:round2(holidayRate(full)*hc),vacationDays:Number($('vacation').value||0),sickDays:Number($('sick').value||0),otherPlus:Number($('otherPlus').value||0),overtimeMinutes:ot.minutes,overtimeAmount:ot.amount,medicalDeduction:Number($('medical').value||0),economyDeduction:Number($('economy').value||0),deductions:Number($('deductions').value||0),notes:$('notes').value.trim(),total,updatedAt:Date.now()}
+}
+function fillMonth(month){
+ const x=state.months[month]||{},full=Number(x.fullMonthlyBase??state.base.monthly??DEFAULT_BASE);
+ $('month').value=month;$('fullBase').value=full;$('weekends').value=x.weekendsCount??0;$('holidays').value=x.holidaysCount??0;$('vacation').value=x.vacationDays??0;$('sick').value=x.sickDays??0;$('otherPlus').value=x.otherPlus??0;$('medical').value=x.medicalDeduction??MEDICAL_DEFAULT;$('economy').value=x.economyDeduction??0;$('deductions').value=x.deductions??0;$('notes').value=x.notes??'';calcForm()
+}
+function saveMonth(){
+ const x=calcForm();if(!x.month)return alert('בחר חודש');state.base.monthly=x.fullMonthlyBase;state.months[x.month]=x;
+ const arch={id:uid(),month:x.month,savedAt:Date.now(),monthData:JSON.parse(JSON.stringify(x)),hours:state.hours.filter(h=>String(h.date).startsWith(x.month)),payments:state.payments.filter(p=>String(p.date).startsWith(x.month))};
+ state.archives.unshift(arch);state.archives=state.archives.slice(0,100);persist('save-month-'+x.month);renderAll();alert('החודש נשמר ✓\nנוצר גם צילום ארכיון וגיבוי מקומי אוטומטי.')
+}
+function duplicateNext(){
+ const x=calcForm();if(!x.month)return;const a=x.month.split('-').map(Number),d=new Date(a[0],a[1],1),m=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');state.months[m]={...x,month:m,weekendsCount:0,weekendsAmount:0,holidaysCount:0,holidaysAmount:0,vacationDays:0,sickDays:0,otherPlus:0,overtimeMinutes:0,overtimeAmount:0,notes:'',updatedAt:Date.now()};persist('duplicate-month');fillMonth(m);renderHistory()
+}
+function addHour(){
+ const date=$('hourDate').value,start=$('hourStart').value,end=$('hourEnd').value;if(!date||!start||!end)return alert('מלא תאריך, התחלה וסיום');
+ const mins=minBetween(start,end);if(!(mins>0))return alert('שעות לא תקינות');
+ state.hours.push({id:uid(),date,start,end,note:$('hourNote').value.trim(),approved:false,createdAt:Date.now()});persist('add-hour');$('hourStart').value='';$('hourEnd').value='';$('hourNote').value='';renderHours();calcForm()
+}
+function renderHours(){
+ const root=$('hoursList'),a=[...state.hours].sort((x,y)=>(y.date+y.start).localeCompare(x.date+x.start));if(!a.length){root.innerHTML='<div class="muted">עדיין אין דיווחי שעות.</div>';return}
+ root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>📅 '+x.date+'</b> <span class="status '+(x.approved?'approved':'')+'">'+(x.approved?'✓ מאושר':'ממתין לאישור')+'</span><div>'+x.start+'–'+x.end+' · <b>'+minLabel(minBetween(x.start,x.end))+'</b></div><div class="muted">'+(x.note||'')+'</div></div><div class="actions"><button class="'+(x.approved?'secondary':'primary')+'" data-approve="'+x.id+'">'+(x.approved?'בטל אישור':'✅ אשר')+'</button><button class="dangerBtn" data-delhour="'+x.id+'">🗑️</button></div></div></div>').join('');
+ root.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>{const x=state.hours.find(v=>v.id===b.dataset.approve);if(x){x.approved=!x.approved;persist('approve-hour');renderHours();calcForm()}});
+ root.querySelectorAll('[data-delhour]').forEach(b=>b.onclick=()=>{if(!confirm('למחוק את מקטע השעות?'))return;state.hours=state.hours.filter(v=>v.id!==b.dataset.delhour);persist('delete-hour');renderHours();calcForm()})
+}
+function addPayment(){
+ const amount=Number($('payAmount').value||0),date=$('payDate').value;if(!(amount>0)||!date)return alert('מלא סכום ותאריך');
+ state.payments.push({id:uid(),amount,date,type:$('payType').value,method:$('payMethod').value,note:$('payNote').value.trim(),createdAt:Date.now()});persist('add-payment');$('payAmount').value='';$('payNote').value='';renderPayments()
+}
+function typeHe(t){return ({advance:'מקדמה',salary:'שכר',weekend:'שבת / מנוחה',holiday:'חג',vacation:'חופשה',expense:'החזר הוצאה',other:'אחר'})[t]||t}
+function methodHe(t){return ({cash:'מזומן',transfer:'העברה בנקאית',other:'אחר'})[t]||t}
+function renderPayments(){
+ const root=$('paymentsList'),a=[...state.payments].sort((x,y)=>(y.date||'').localeCompare(x.date||''));if(!a.length){root.innerHTML='<div class="muted">עדיין אין תשלומים שמורים.</div>';return}
+ root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>'+x.date+' · '+typeHe(x.type)+'</b><div class="muted">'+methodHe(x.method)+' · '+(x.note||'')+'</div></div><div><div class="amount">'+money(x.amount)+'</div><button class="dangerBtn" data-delpay="'+x.id+'">🗑️</button></div></div></div>').join('');
+ root.querySelectorAll('[data-delpay]').forEach(b=>b.onclick=()=>{if(!confirm('למחוק את התשלום?'))return;state.payments=state.payments.filter(v=>v.id!==b.dataset.delpay);persist('delete-payment');renderPayments()})
+}
+function renderHistory(){
+ const root=$('historyList'),a=Object.values(state.months).sort((a,b)=>String(b.month).localeCompare(String(a.month)));if(!a.length){root.innerHTML='<div class="muted">עדיין אין חודשים שמורים.</div>';return}
+ root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>'+x.month+'</b><div class="muted">בסיס '+money(x.base)+' · שבתות '+(x.weekendsCount||0)+' · שעות נוספות '+minLabel(x.overtimeMinutes||0)+'</div><div class="muted">ביטוח '+money(x.medicalDeduction||0)+' · כלכלה '+money(x.economyDeduction||0)+' · ניכויים '+money(x.deductions||0)+'</div></div><div><div class="amount">'+money(x.total)+'</div><button class="secondary" data-openmonth="'+x.month+'">פתח</button></div></div></div>').join('');
+ root.querySelectorAll('[data-openmonth]').forEach(b=>b.onclick=()=>{showPane('month');fillMonth(b.dataset.openmonth)})
+}
+function renderArchive(){
+ const root=$('archiveList'),a=state.archives||[];if(!a.length){root.innerHTML='<div class="muted">עדיין אין צילומי ארכיון.</div>';return}
+ root.innerHTML=a.slice(0,40).map(x=>'<div class="row"><div class="rowTop"><div><b>'+x.month+'</b><div class="muted">'+new Date(x.savedAt).toLocaleString('he-IL')+' · '+x.hours.length+' מקטעי שעות · '+x.payments.length+' תשלומים</div></div><div><div class="amount">'+money(x.monthData.total)+'</div><button class="secondary" data-restorearchive="'+x.id+'">שחזר</button></div></div></div>').join('');
+ root.querySelectorAll('[data-restorearchive]').forEach(b=>b.onclick=()=>{const a=state.archives.find(v=>v.id===b.dataset.restorearchive);if(!a||!confirm('לשחזר את צילום החודש הזה? הנתון הנוכחי של אותו חודש יוחלף.'))return;state.months[a.month]=JSON.parse(JSON.stringify(a.monthData));state.hours=state.hours.filter(h=>!String(h.date).startsWith(a.month)).concat(JSON.parse(JSON.stringify(a.hours)));state.payments=state.payments.filter(p=>!String(p.date).startsWith(a.month)).concat(JSON.parse(JSON.stringify(a.payments)));persist('restore-archive');renderAll();fillMonth(a.month);showPane('month')})
+}
+async function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file)})}
+async function saveDoc(){
+ const file=$('docFile').files[0],title=$('docTitle').value.trim();if(!file||!title)return alert('בחר קובץ והקלד כותרת');
+ if(file.size>20*1024*1024)return alert('הקובץ גדול מדי. עד 20MB.');
+ const rec={id:uid(),title,type:$('docType').value,name:file.name,mime:file.type||'application/octet-stream',size:file.size,dataUrl:await fileToDataUrl(file),createdAt:Date.now()};
+ await idbPut('docs',rec);$('docTitle').value='';$('docFile').value='';renderDocs();persist('save-document')
+}
+async function renderDocs(){
+ const root=$('docsList'),a=(await idbAll('docs')).sort((a,b)=>b.createdAt-a.createdAt);if(!a.length){root.innerHTML='<div class="muted">עדיין אין מסמכים שמורים.</div>';return}
+ root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>📄 '+escapeHtml(x.title)+'</b><div class="muted">'+escapeHtml(x.type)+' · '+escapeHtml(x.name)+' · '+Math.round(x.size/1024)+'KB</div></div><div class="actions"><button class="secondary" data-opendoc="'+x.id+'">פתח</button><button class="dangerBtn" data-deldoc="'+x.id+'">🗑️</button></div></div></div>').join('');
+ root.querySelectorAll('[data-opendoc]').forEach(b=>b.onclick=()=>{const x=a.find(v=>v.id===b.dataset.opendoc);if(x)window.open(x.dataUrl,'_blank','noopener')});
+ root.querySelectorAll('[data-deldoc]').forEach(b=>b.onclick=async()=>{if(!confirm('למחוק את המסמך?'))return;await idbDelete('docs',b.dataset.deldoc);renderDocs();persist('delete-document')})
+}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function exportBackup(){
+ const docs=await idbAll('docs');const pack={kind:'tik-nargiza-backup',version:1,exportedAt:Date.now(),data:state,docs};
+ const blob=new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tik-nargiza-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)
+}
+async function importBackupFile(file){
+ try{const pack=JSON.parse(await file.text());if(pack.kind!=='tik-nargiza-backup'||!pack.data)throw Error('קובץ לא מתאים');if(!confirm('השחזור יחליף את הנתונים הנוכחיים. להמשיך?'))return;state=migrate(pack.data);localStorage.setItem(LS,JSON.stringify(state));for(const d of await idbAll('docs'))await idbDelete('docs',d.id);for(const d of (pack.docs||[]))await idbPut('docs',d);persist('import-backup');renderAll();fillMonth(Object.keys(state.months).sort().pop()||'2026-09');alert('השחזור הושלם ✓')}catch(e){alert('לא ניתן לשחזר את הקובץ: '+e.message)}
+}
+async function renderSnapshots(){
+ const root=$('snapshotsList'),a=(await idbAll('snapshots')).sort((a,b)=>b.savedAt-a.savedAt).slice(0,15);if(!a.length){root.innerHTML='<div class="muted">עדיין אין גרסאות מקומיות.</div>';return}
+ root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>'+new Date(x.savedAt).toLocaleString('he-IL')+'</b><div class="muted">'+escapeHtml(x.reason||'שמירה')+'</div></div><button class="secondary" data-restoresnap="'+x.id+'">שחזר</button></div></div>').join('');
+ root.querySelectorAll('[data-restoresnap]').forEach(b=>b.onclick=()=>{const x=a.find(v=>v.id===b.dataset.restoresnap);if(!x||!confirm('לשחזר את הגרסה המקומית הזאת?'))return;state=migrate(JSON.parse(JSON.stringify(x.data)));localStorage.setItem(LS,JSON.stringify(state));persist('restore-snapshot');renderAll();fillMonth(Object.keys(state.months).sort().pop()||'2026-09')})
+}
+function showPane(name){
+ document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));$('pane-'+name).classList.remove('hidden');
+ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.pane===name));
+ if(name==='docs')renderDocs();if(name==='backup')renderSnapshots();if(name==='archive')renderArchive();if(name==='history')renderHistory()
+}
+function renderAll(){renderHours();renderPayments();renderHistory();renderArchive();renderDocs().catch(()=>{});calcForm()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showPane(b.dataset.pane));
+['fullBase','weekends','holidays','vacation','sick','otherPlus','medical','economy','deductions','notes'].forEach(id=>$(id).addEventListener('input',calcForm));
+$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('duplicateMonth').onclick=duplicateNext;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
+$('payDate').value=new Date().toISOString().slice(0,10);
+fillMonth('2026-09');renderAll();persist('startup');
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
+</script>
+</body>
+</html>
