@@ -10,3 +10,28 @@ self.addEventListener('fetch',e=>{
   }
   e.respondWith(caches.open(CACHE).then(async c=>{const hit=await c.match(r);if(hit)return hit;const resp=await fetch(r);if(resp.ok)c.put(r,resp.clone());return resp}));
 });
+
+self.addEventListener('push',e=>{
+  let data={};
+  try{data=e.data?e.data.json():{}}catch{data={body:e.data?.text?.()||''}}
+  const title=data.title||'דואגים ביחד';
+  const options={
+    body:data.body||'יש עדכון חדש באפליקציה',
+    icon:'/icons/icon-192.png',
+    badge:'/icons/icon-192.png',
+    data:{url:data.url||'/'},
+    tag:'doagim-'+(data.kind||'general'),
+    renotify:true
+  };
+  e.waitUntil(self.registration.showNotification(title,options));
+});
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  const target=e.notification?.data?.url||'/';
+  e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
+    for(const client of list){
+      if('focus' in client){client.navigate(target).catch(()=>{});return client.focus()}
+    }
+    return clients.openWindow?clients.openWindow(target):undefined;
+  }));
+});
