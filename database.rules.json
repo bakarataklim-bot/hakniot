@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sharedLists": {
+      "241361": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
