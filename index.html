@@ -178,7 +178,7 @@ body.naomi-review .wrap{max-width:760px}
   </div>
 </div>
 
-<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.3 · תיק נרגיזה: ענן יציב + גיבוי מקומי</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
+<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.4 · תיקון חיבור ענן ראשי + גיבוי מקומי</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
 <main class="wrap">
 <div id="livePresenceStrip" class="liveStrip hidden" aria-live="polite"><span class="liveTitle">👥 מחוברים עכשיו:</span><span id="livePresenceChips" class="liveEmpty">בודק...</span><button id="activityAdminBtn" class="activityAdminBtn hidden" type="button">📋 יומן פעילות</button></div>
 <div id="activityOverlay" class="activityOverlay hidden" aria-hidden="true" dir="rtl"><div class="activityTop"><b>📋 פעילות היום</b><button id="activityClose" class="secondary" type="button">✕ חזרה</button></div><div id="activitySummary" class="activitySummary"></div><div class="activityActions"><button id="activityRefresh" class="activityRefresh" type="button">↻ רענן</button><button id="activityDelete" class="activityDelete" type="button">🗑️ מחק יומן היום</button></div><div id="activityLog" class="activityLog"><div class="activityRow"><div></div><div></div><div>טוען...</div></div></div></div>
@@ -553,7 +553,7 @@ const firebaseConfig = {
   appId: "1:254319747029:web:6331f000db6c9cc56e675c",
   measurementId: "G-KFX9H9W77L"
 };
-const APP_VERSION='206.3-nargiza-cloud-local-backup';
+const APP_VERSION='206.4-cloud-auth-nonblocking';
 const VAPID_PUBLIC_KEY='BP7OfJiKQje2uTUCjjFUEzWp9UARGRttRrzEzNdKiIyxUfPdG4OZqjXYY5quz9yqu1SRS1fDR2TgG8T1Q505yPA';
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -798,19 +798,24 @@ localStorage.setItem(LS_CODE,FIXED_SHARE_CODE);
 async function initCloud(){
   try{
     const appMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-    const authMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
     const rtdb=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js');
     const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(firebaseConfig);
-    auth=authMod.getAuth(app);
-    if(!auth.currentUser)await authMod.signInAnonymously(auth);
     db=rtdb.getDatabase(app);
     window.RTDB=rtdb;
-    window.FIREBASE_AUTH=auth;
     window.FIREBASE_DB=db;
-    window.dispatchEvent(new CustomEvent('doagim-firebase-ready'));
     $('cloudSetup').classList.add('hidden');
     if(shareCode){const cached=loadSharedCache(shareCode);if(cached.length){sharedItems=cached;renderShared();renderNotice()}subscribe();subscribeMembers();syncPushSubscription()}
-  }catch(e){console.error('firebase init/auth',e);$('cloudSetup').classList.remove('hidden');loadSharedViaRest();if(!restShoppingTimer)restShoppingTimer=setInterval(()=>{if(document.visibilityState==='visible')loadSharedViaRest()},60000)}
+    window.dispatchEvent(new CustomEvent('doagim-firebase-ready'));
+    try{
+      const authMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+      auth=authMod.getAuth(app);
+      window.FIREBASE_AUTH=auth;
+      if(!auth.currentUser)await authMod.signInAnonymously(auth);
+      window.dispatchEvent(new CustomEvent('doagim-firebase-auth-ready'));
+    }catch(authErr){
+      console.warn('firebase anonymous auth unavailable; cloud continues without it',authErr);
+    }
+  }catch(e){console.error('firebase init',e);$('cloudSetup').classList.remove('hidden');loadSharedViaRest();if(!restShoppingTimer)restShoppingTimer=setInterval(()=>{if(document.visibilityState==='visible')loadSharedViaRest()},60000)}
 }
 function randomCode(){return String(Math.floor(100000+Math.random()*900000))}
 async function createShared(){
@@ -2476,8 +2481,8 @@ $('familyWeekendStrip')?.addEventListener('click',()=>{$('familyWeekendOverlay')
    const method=String(opts.method||'GET').toUpperCase(),u=new URL(url,location.href);
    try{
      const isDb=u.hostname==='hakniot-default-rtdb.firebaseio.com';
-     const rtdb=window.RTDB,db=window.FIREBASE_DB,authUser=window.FIREBASE_AUTH?.currentUser;
-     if(isDb&&rtdb&&db&&authUser){
+     const rtdb=window.RTDB,db=window.FIREBASE_DB;
+     if(isDb&&rtdb&&db){
        const path=decodeURIComponent(u.pathname.replace(/^\/+|\.json$/g,''));
        const ref=rtdb.ref(db,path);
        if(method==='GET'){
