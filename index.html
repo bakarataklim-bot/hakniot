@@ -178,7 +178,7 @@ body.naomi-review .wrap{max-width:760px}
   </div>
 </div>
 
-<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.5 · תיקון סנכרון תיק נרגיזה + גיבוי מקומי</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
+<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.6 · תיקון ענן + התראות + גיבוי מקומי</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
 <main class="wrap">
 <div id="livePresenceStrip" class="liveStrip hidden" aria-live="polite"><span class="liveTitle">👥 מחוברים עכשיו:</span><span id="livePresenceChips" class="liveEmpty">בודק...</span><button id="activityAdminBtn" class="activityAdminBtn hidden" type="button">📋 יומן פעילות</button></div>
 <div id="activityOverlay" class="activityOverlay hidden" aria-hidden="true" dir="rtl"><div class="activityTop"><b>📋 פעילות היום</b><button id="activityClose" class="secondary" type="button">✕ חזרה</button></div><div id="activitySummary" class="activitySummary"></div><div class="activityActions"><button id="activityRefresh" class="activityRefresh" type="button">↻ רענן</button><button id="activityDelete" class="activityDelete" type="button">🗑️ מחק יומן היום</button></div><div id="activityLog" class="activityLog"><div class="activityRow"><div></div><div></div><div>טוען...</div></div></div></div>
@@ -553,8 +553,8 @@ const firebaseConfig = {
   appId: "1:254319747029:web:6331f000db6c9cc56e675c",
   measurementId: "G-KFX9H9W77L"
 };
-const APP_VERSION='206.5-payroll-auth-retry';
-const VAPID_PUBLIC_KEY='BP7OfJiKQje2uTUCjjFUEzWp9UARGRttRrzEzNdKiIyxUfPdG4OZqjXYY5quz9yqu1SRS1fDR2TgG8T1Q505yPA';
+const APP_VERSION='206.6-cloud-push-fix';
+const VAPID_PUBLIC_KEY='BNZzY9PHLZxKG6-zwSoJZAYUX1SBuaodGupq1N_PnBuZw2oX4SlH4ldUrSFFDp64hNu2ME0YkKbO2t5DPKdGFAQ';
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const FAMILY_USERS={
@@ -771,7 +771,19 @@ function clearWarnings(){unread().forEach(x=>seen.add(x.eventId));saveSeen();ren
 function urlBase64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4);const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 function setPushState(text,active=false){const el=$('pushState'),btn=$('pushBtn');if(el)el.textContent=text;if(btn){btn.textContent=active?'🔔 התראות פעילות':'🔔 הפעל התראות קופצות';btn.disabled=active}}
 async function getPushSubscription(){if(!('serviceWorker'in navigator)||!('PushManager'in window))return null;const reg=await navigator.serviceWorker.ready;return reg.pushManager.getSubscription()}
-async function savePushSubscription(subscription,code=shareCode){if(!subscription||!db||!code)return;const r=window.RTDB;await r.set(r.ref(db,'sharedLists/'+code+'/pushSubscriptions/'+clientId),{subscription:subscription.toJSON(),updatedAt:r.serverTimestamp(),appVersion:APP_VERSION,role:'family',lang:'he'})}
+async function savePushSubscription(subscription,code=shareCode){
+  if(!subscription||!code)return;
+  const payload={subscription:subscription.toJSON(),clientId,code,appVersion:APP_VERSION,role:'family',lang:'he'};
+  try{
+    if(db&&window.RTDB){
+      const r=window.RTDB;
+      await r.set(r.ref(db,'sharedLists/'+code+'/pushSubscriptions/'+clientId),{...payload,updatedAt:r.serverTimestamp()});
+      return;
+    }
+  }catch(e){console.warn('push subscription firebase save failed',e)}
+  const res=await fetch('/api/push-subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  if(!res.ok)throw new Error('push subscribe '+res.status)
+}
 function pushKeyMatches(sub){try{const key=sub?.options?.applicationServerKey;if(!key)return false;const a=new Uint8Array(key),b=urlBase64ToUint8Array(VAPID_PUBLIC_KEY);if(a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true}catch(e){return false}}
 async function ensureCurrentPushSubscription(){const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(sub&&!pushKeyMatches(sub)){try{await sub.unsubscribe()}catch(e){}sub=null}if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});return sub}
 async function syncPushSubscription(){try{if(!('Notification' in window)||Notification.permission!=='granted'||!db||!shareCode)return;const sub=await ensureCurrentPushSubscription();if(sub){await savePushSubscription(sub);setPushState('✓ התראות פעילות במכשיר הזה.',true)}}catch(e){console.warn('push sync',e);setPushState('יש לאשר מחדש התראות במכשיר הזה.',false)}}
@@ -798,25 +810,43 @@ localStorage.setItem(LS_CODE,FIXED_SHARE_CODE);
 async function initCloud(){
   try{
     const appMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+    const authMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
     const rtdb=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js');
     const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(firebaseConfig);
     db=rtdb.getDatabase(app);
+    auth=authMod.getAuth(app);
     window.RTDB=rtdb;
     window.FIREBASE_DB=db;
+    window.FIREBASE_AUTH=auth;
     $('cloudSetup').classList.add('hidden');
-    if(shareCode){const cached=loadSharedCache(shareCode);if(cached.length){sharedItems=cached;renderShared();renderNotice()}subscribe();subscribeMembers();syncPushSubscription()}
-    window.dispatchEvent(new CustomEvent('doagim-firebase-ready'));
+
+    let authOk=false;
     try{
-      const authMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
-      auth=authMod.getAuth(app);
-      window.FIREBASE_AUTH=auth;
       if(!auth.currentUser)await authMod.signInAnonymously(auth);
-      window.FIREBASE_AUTH_READY=true;
-      window.dispatchEvent(new CustomEvent('doagim-firebase-auth-ready'));
+      authOk=!!auth.currentUser;
+      window.FIREBASE_AUTH_READY=authOk;
+      if(authOk)window.dispatchEvent(new CustomEvent('doagim-firebase-auth-ready'));
     }catch(authErr){
-      console.warn('firebase anonymous auth unavailable; cloud continues without it',authErr);
+      console.warn('firebase anonymous auth unavailable',authErr);
     }
-  }catch(e){console.error('firebase init',e);$('cloudSetup').classList.remove('hidden');loadSharedViaRest();if(!restShoppingTimer)restShoppingTimer=setInterval(()=>{if(document.visibilityState==='visible')loadSharedViaRest()},60000)}
+
+    if(shareCode){
+      const cached=loadSharedCache(shareCode);
+      if(cached.length){sharedItems=cached;renderShared();renderNotice()}
+      subscribe();
+      subscribeMembers();
+      syncPushSubscription();
+      if(!authOk){
+        setTimeout(()=>{if(window.FIREBASE_AUTH?.currentUser){subscribe();subscribeMembers();syncPushSubscription();loadSharedViaRest()}},1200);
+      }
+    }
+    window.dispatchEvent(new CustomEvent('doagim-firebase-ready'));
+  }catch(e){
+    console.error('firebase init',e);
+    $('cloudSetup').classList.remove('hidden');
+    loadSharedViaRest();
+    if(!restShoppingTimer)restShoppingTimer=setInterval(()=>{if(document.visibilityState==='visible')loadSharedViaRest()},60000)
+  }
 }
 function randomCode(){return String(Math.floor(100000+Math.random()*900000))}
 async function createShared(){
