@@ -178,7 +178,7 @@ body.naomi-review .wrap{max-width:760px}
   </div>
 </div>
 
-<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.7 · תיקון התראות + בדיקת ענן</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
+<header class="appHero"><div class="heroInner"><div class="heroBrand"><h1 id="appTitle" class="heroTitle">דואגים ביחד <span class="heroHeart">❤️</span></h1><div class="heroSubtitle">כל מה שחשוב לטיפול באמא — ביחד, במקום אחד ❤️</div><div id="appSub" class="heroVersion">אנדרי · מנהל</div><div class="heroVersion">גרסה 206.8 · תיקון Firebase + התראות</div><div class="heroControls"><button id="infoBtn" class="heroInfo" type="button" aria-label="הסבר על האפליקציה">ⓘ</button><button id="switchFamilyUser" class="heroInfo" type="button" aria-label="החלף משתמש" title="החלף משתמש">👤</button><select id="langSelect"><option value="he">עברית 🇮🇱</option><option value="ru">Русский 🇷🇺</option></select><button id="installBtn" class="primary install hidden">📲 התקן בטלפון</button></div></div><img src="./assets/logo-main.png" class="heroLogo" alt="דואגים ביחד"></div></header>
 <main class="wrap">
 <div id="livePresenceStrip" class="liveStrip hidden" aria-live="polite"><span class="liveTitle">👥 מחוברים עכשיו:</span><span id="livePresenceChips" class="liveEmpty">בודק...</span><button id="activityAdminBtn" class="activityAdminBtn hidden" type="button">📋 יומן פעילות</button></div>
 <div id="activityOverlay" class="activityOverlay hidden" aria-hidden="true" dir="rtl"><div class="activityTop"><b>📋 פעילות היום</b><button id="activityClose" class="secondary" type="button">✕ חזרה</button></div><div id="activitySummary" class="activitySummary"></div><div class="activityActions"><button id="activityRefresh" class="activityRefresh" type="button">↻ רענן</button><button id="activityDelete" class="activityDelete" type="button">🗑️ מחק יומן היום</button></div><div id="activityLog" class="activityLog"><div class="activityRow"><div></div><div></div><div>טוען...</div></div></div></div>
@@ -544,7 +544,7 @@ window.addEventListener('error',e=>console.error('GLOBAL ERROR',e.error||e.messa
 window.addEventListener('unhandledrejection',e=>console.error('UNHANDLED',e.reason));
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAgV5b6fb6p9dPwKBsL_yokNtSCRR6k",
+  apiKey: "AIzaSyAQV5b6fb6RUbd9gPwKBsL_yokNtSCRR6k",
   authDomain: "hakniot.firebaseapp.com",
   databaseURL: "https://hakniot-default-rtdb.firebaseio.com",
   projectId: "hakniot",
@@ -553,7 +553,7 @@ const firebaseConfig = {
   appId: "1:254319747029:web:6331f000db6c9cc56e675c",
   measurementId: "G-KFX9H9W77L"
 };
-const APP_VERSION='206.7-vapid-firebase-diag';
+const APP_VERSION='206.8-firebase-key-fixed';
 const VAPID_PUBLIC_KEY='BDg1h6g6UPqPPSwoWJrT5HXI7RXwgxkpEWgPX6pBCihcqcfGUbv_FGUug57jtd6B4Vv2V5kp4Yrx3MjDllCS3GA';
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -2508,7 +2508,7 @@ $('familyWeekendStrip')?.addEventListener('click',()=>{$('familyWeekendOverlay')
 (function(){
  const START_DATE='2026-09-02', EMP_HE="נרגיזה נג'מייבה", EMP_RU='Наргиза Наджмиева', EMP_LATIN='NARGIZA NAJMIEVA', EMP_PASSPORT='FB2092675', MEDICAL_DEDUCTION=140.86, DEFAULT_BASE_MONTHLY=6000, WEEKEND_PAY=440, OT_FIRST_RATE=44, OT_LATER_RATE=53;
  const LS='doagim-nargiza-payroll-v1', DOCDB='doagim-nargiza-docs-v1', GROUP='241361', REST='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/salarySignatures', HOURS_REST='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/workHours', PAYROLL_REST='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/nargizaPayrollV2', PAYROLL_BACKUP_REST='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/nargizaPayrollBackups', MONTHLY_ARCHIVE_REST='https://hakniot-default-rtdb.firebaseio.com/sharedLists/'+GROUP+'/monthlyArchive', HOURS_LINK_TOKEN='wh_Jw0tMitbrBarlS8tLk7trcRPGf4APrzB';
- const FIREBASE_API_KEY='AIzaSyAgV5b6fb6p9dPwKBsL_yokNtSCRR6k';
+ const FIREBASE_API_KEY='AIzaSyAQV5b6fb6RUbd9gPwKBsL_yokNtSCRR6k';
  let salaryFbToken='',salaryFbTokenUntil=0,salaryFbTokenPromise=null;
  async function salaryAuthToken(){
    try{
@@ -2939,7 +2939,7 @@ function setSalaryTab(t){document.querySelectorAll('.salaryTab').forEach(b=>b.cl
     appMod=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
     RTDB=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js');
     for(let i=0;i<40&&!appMod.getApps().length;i++)await new Promise(r=>setTimeout(r,100));
-    const app=appMod.getApps()[0]||appMod.initializeApp({apiKey:'AIzaSyAgV5b6fb6p9dPwKBsL_yokNtSCRR6k',authDomain:'hakniot.firebaseapp.com',databaseURL:'https://hakniot-default-rtdb.firebaseio.com',projectId:'hakniot',storageBucket:'hakniot.firebasestorage.app',messagingSenderId:'254319747029',appId:'1:254319747029:web:6331f000db6c9cc56e675c'},'presence-v172');
+    const app=appMod.getApps()[0]||appMod.initializeApp({apiKey:'AIzaSyAQV5b6fb6RUbd9gPwKBsL_yokNtSCRR6k',authDomain:'hakniot.firebaseapp.com',databaseURL:'https://hakniot-default-rtdb.firebaseio.com',projectId:'hakniot',storageBucket:'hakniot.firebasestorage.app',messagingSenderId:'254319747029',appId:'1:254319747029:web:6331f000db6c9cc56e675c'},'presence-v172');
     db=RTDB.getDatabase(app);baseRef=`sharedLists/${GROUP}/activity`;
   }catch(e){console.warn('presence init',e);return}
 
