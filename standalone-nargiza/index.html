@@ -24,13 +24,22 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 .bottomState{position:fixed;bottom:0;left:0;right:0;z-index:15;background:#fff;border-top:1px solid #d8e2ec;padding:8px 12px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px #0001}
 .bottomInner{max-width:860px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.bottomInner small{color:#596c80}.savePulse{color:#14783c;font-weight:900}
 .fileLabel{display:block;border:1px dashed #9eb6cf;border-radius:12px;padding:14px;text-align:center;background:#f7fbff;cursor:pointer}.fileLabel input{display:none}
+
+.signMode{position:fixed;inset:0;z-index:100;background:#eef3f8;overflow:auto;padding:12px;direction:rtl}
+.signWrap{max-width:760px;margin:auto}.signHeader{background:linear-gradient(135deg,#1475de,#61a8ef);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
+.signSummary{background:#fff;border:1px solid #dce5ef;border-radius:16px;padding:14px;box-shadow:0 3px 14px #2030400d}
+.signLine{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid #edf1f5;padding:9px 0}.signLine:last-child{border-bottom:0}.signLine b{white-space:nowrap}.signTotal{font-size:22px;color:#1262b8;font-weight:900}
+.signatureBox{background:#fff;border:1px solid #dce5ef;border-radius:16px;padding:14px;margin-top:12px}.signatureCanvas{display:block;width:100%;height:210px;border:2px dashed #9db2c8;border-radius:12px;background:#fff;touch-action:none}
+.signChecks{margin:12px 0;line-height:1.7}.signChecks label{display:flex;flex-direction:row;align-items:flex-start;gap:8px;font-weight:700}.signChecks input{width:auto;margin-top:5px}
+.signHintRu{direction:ltr;text-align:left;color:#52677d;font-size:13px;margin-top:6px}
+
 @media(max-width:620px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.title{font-size:21px}.card{border-radius:13px;padding:12px}.actions button{min-width:120px}}
 </style>
 </head>
 <body>
 <div class="app">
 <header>
-  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.0 · עצמאי</div></div>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.1 · חתימה + PDF</div></div>
 </header>
 <main>
   <section class="card employee">
@@ -74,7 +83,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
       <div class="note" id="baseNote" style="margin-top:10px"></div>
       <div class="note" style="margin-top:8px">🧮 שבת: 440 ₪ לכל שבת. שעות: 8 השעות הראשונות ביום כלולות בבסיס; שעות 9–10 ב־44 ₪ לשעה, ומהשעה ה־11 ב־53 ₪ לשעה.</div>
       <div class="total"><span>סה״כ לתשלום</span><b id="total">₪0.00</b></div>
-      <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
+      <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="primary" id="sendForSignature">📲 שלח לנרגיזה לחתימה</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
     </div>
   </section>
 
@@ -148,12 +157,43 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
     <div class="card"><h3>🕘 גרסאות מקומיות אחרונות</h3><div id="snapshotsList"></div></div>
   </section>
 </main>
+
+<div id="signMode" class="signMode hidden">
+  <div class="signWrap">
+    <div class="signHeader">
+      <div style="font-size:24px;font-weight:900">✍️ אישור סיכום שכר</div>
+      <div style="margin-top:4px">Подтверждение расчёта зарплаты</div>
+    </div>
+    <div class="signSummary">
+      <div style="font-weight:900;font-size:18px;margin-bottom:8px">נרגיזה נג'מייבה / NARGIZA NAJMIEVA</div>
+      <div id="signSummaryBody"></div>
+      <div class="note" style="margin-top:12px">
+        אני מאשרת כי עברתי על סיכום השכר והפרטים המוצגים לעיל וכי הם נכונים לפי הידוע לי.
+        <div class="signHintRu">Я подтверждаю, что ознакомилась с расчётом зарплаты и указанными выше данными, и они верны по имеющейся у меня информации.</div>
+      </div>
+    </div>
+    <div class="signatureBox">
+      <h3>חתימה ידנית / Подпись</h3>
+      <canvas id="signatureCanvas" class="signatureCanvas" width="1000" height="360"></canvas>
+      <div class="signChecks">
+        <label><input id="signConfirm" type="checkbox"> <span>אני מאשרת את סיכום השכר / Я подтверждаю расчёт зарплаты</span></label>
+      </div>
+      <div class="actions">
+        <button id="clearSignature" class="secondary">נקה חתימה / Очистить</button>
+        <button id="saveSignedPdf" class="secondary">💾 שמור PDF בטלפון</button>
+        <button id="shareSignedPdf" class="primary">✅ אשרי ושלחי</button>
+      </div>
+      <div class="note ok" style="margin-top:10px">החתימה וה־PDF נוצרים במכשיר הזה. הם אינם נשמרים בענן. / Подпись и PDF создаются на этом устройстве и не сохраняются в облаке.</div>
+    </div>
+  </div>
+</div>
+
 <div class="bottomState"><div class="bottomInner"><span class="backupBadge">📱 נשמר מקומית</span><small id="saveState">מוכן</small></div></div>
 </div>
 <script>
 (function(){
 'use strict';
-const VERSION='1.0-local-first';
+const VERSION='1.1-signature-pdf';
 const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=140.86, OT1=44, OT2=53;
 const LS='tik-nargiza-data-v1';
 const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
@@ -270,6 +310,114 @@ async function renderSnapshots(){
  root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>'+new Date(x.savedAt).toLocaleString('he-IL')+'</b><div class="muted">'+escapeHtml(x.reason||'שמירה')+'</div></div><button class="secondary" data-restoresnap="'+x.id+'">שחזר</button></div></div>').join('');
  root.querySelectorAll('[data-restoresnap]').forEach(b=>b.onclick=()=>{const x=a.find(v=>v.id===b.dataset.restoresnap);if(!x||!confirm('לשחזר את הגרסה המקומית הזאת?'))return;state=migrate(JSON.parse(JSON.stringify(x.data)));localStorage.setItem(LS,JSON.stringify(state));persist('restore-snapshot');renderAll();fillMonth(Object.keys(state.months).sort().pop()||'2026-09')})
 }
+
+let currentSignRequest=null,signatureDirty=false;
+
+function encodeSignRequest(obj){
+ const bytes=new TextEncoder().encode(JSON.stringify(obj));let bin='';for(const b of bytes)bin+=String.fromCharCode(b);
+ return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
+}
+function decodeSignRequest(s){
+ s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+ const bin=atob(s),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+ return JSON.parse(new TextDecoder().decode(bytes))
+}
+function buildSignRequest(){
+ const x=calcForm();if(!x.month)throw Error('בחר חודש');
+ state.base.monthly=x.fullMonthlyBase;state.months[x.month]=x;persist('signature-request-'+x.month);
+ const hours=state.hours.filter(h=>h.approved&&String(h.date).startsWith(x.month)).map(h=>({date:h.date,start:h.start,end:h.end,note:h.note||'',minutes:minBetween(h.start,h.end)}));
+ return {kind:'tik-nargiza-sign-v1',id:uid(),createdAt:Date.now(),employee:'נרגיזה נג\'מייבה',employeeLatin:'NARGIZA NAJMIEVA',startDate:START_DATE,month:x.month,details:x,hours}
+}
+function sendForSignature(){
+ try{
+  const req=buildSignRequest(),payload=encodeSignRequest(req),url=location.origin+location.pathname+'#sign='+payload;
+  const msg='נרגיזה, מצורף קישור לאישור סיכום השכר. פתחי את הקישור, בדקי את הפרטים, חתמי עם האצבע ולחצי על "אשרי ושלחי". בסוף ייווצר קובץ PDF חתום לשליחה חזרה.\n\nНаргиза, откройте ссылку, проверьте расчёт зарплаты, подпишите пальцем и нажмите «Подтвердить и отправить». В конце будет создан подписанный PDF-файл для отправки обратно.\n\n'+url;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener')
+ }catch(e){alert(e.message||'לא ניתן ליצור בקשת חתימה')}
+}
+function signSummaryRows(req){
+ const x=req.details||{},rows=[
+  ['חודש / Месяц',x.month||''],
+  ['שכר בסיס / Базовая зарплата',money(x.base||0)],
+  ['שבתות / Субботы',(x.weekendsCount||0)+' · '+money(x.weekendsAmount||0)],
+  ['חגים / Праздники',(x.holidaysCount||0)+' · '+money(x.holidaysAmount||0)],
+  ['שעות נוספות / Сверхурочные',minLabel(x.overtimeMinutes||0)+' · '+money(x.overtimeAmount||0)],
+  ['תוספות אחרות / Другие доплаты',money(x.otherPlus||0)],
+  ['ביטוח רפואי / Мед. страховка','− '+money(x.medicalDeduction||0)],
+  ['כלכלה / Питание','− '+money(x.economyDeduction||0)],
+  ['ניכויים/מקדמות / Удержания','− '+money(x.deductions||0)]
+ ];
+ return rows
+}
+function enterSignMode(req){
+ currentSignRequest=req;signatureDirty=false;document.querySelector('.app').classList.add('hidden');$('signMode').classList.remove('hidden');
+ const rows=signSummaryRows(req),x=req.details||{};
+ $('signSummaryBody').innerHTML=rows.map(r=>'<div class="signLine"><b>'+escapeHtml(r[0])+'</b><span>'+escapeHtml(r[1])+'</span></div>').join('')+
+ '<div class="signLine"><b>סה״כ לתשלום / Итого</b><span class="signTotal">'+escapeHtml(money(x.total||0))+'</span></div>'+
+ (x.notes?'<div class="note" style="margin-top:10px"><b>הערות / Примечания:</b><br>'+escapeHtml(x.notes)+'</div>':'')+
+ (req.hours&&req.hours.length?'<div class="note" style="margin-top:10px"><b>שעות מאושרות / Подтверждённые часы:</b><br>'+req.hours.map(h=>escapeHtml(h.date+' '+h.start+'–'+h.end+' ('+minLabel(h.minutes)+')')).join('<br>')+'</div>':'');
+ setupSignatureCanvas()
+}
+function setupSignatureCanvas(){
+ const cv=$('signatureCanvas'),ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.lineWidth=5;ctx.lineCap='round';ctx.strokeStyle='#172235';let down=false,last=null;
+ const pt=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}};
+ cv.onpointerdown=e=>{down=true;signatureDirty=true;last=pt(e);cv.setPointerCapture?.(e.pointerId)};
+ cv.onpointermove=e=>{if(!down)return;const p=pt(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p};
+ cv.onpointerup=cv.onpointercancel=()=>{down=false;last=null};
+ $('clearSignature').onclick=()=>{ctx.clearRect(0,0,cv.width,cv.height);signatureDirty=false};
+}
+function drawWrapped(ctx,text,x,y,maxWidth,lineHeight){
+ const words=String(text||'').split(/\s+/);let line='',yy=y;
+ for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,yy);line=word;yy+=lineHeight}else line=test}
+ if(line)ctx.fillText(line,x,yy);return yy+lineHeight
+}
+function makeSignedDocumentCanvas(req){
+ const w=1240,h=1754,cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.direction='rtl';ctx.textAlign='right';ctx.fillStyle='#172235';
+ ctx.font='bold 54px Arial';ctx.fillText('אישור סיכום שכר',1120,90);ctx.font='30px Arial';ctx.fillText('Подтверждение расчёта зарплаты',1120,135);
+ ctx.strokeStyle='#1d72d8';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(120,165);ctx.lineTo(1120,165);ctx.stroke();
+ let y=230;ctx.font='bold 34px Arial';ctx.fillText('נרגיזה נג\'מייבה / NARGIZA NAJMIEVA',1120,y);y+=65;
+ ctx.font='29px Arial';for(const r of signSummaryRows(req)){ctx.fillText(r[0],1120,y);ctx.textAlign='left';ctx.fillText(r[1],120,y);ctx.textAlign='right';y+=50}
+ ctx.fillStyle='#1262b8';ctx.font='bold 42px Arial';ctx.fillText('סה״כ לתשלום / Итого',1120,y);ctx.textAlign='left';ctx.fillText(money(req.details?.total||0),120,y);ctx.textAlign='right';ctx.fillStyle='#172235';y+=75;
+ if(req.details?.notes){ctx.font='bold 28px Arial';ctx.fillText('הערות / Примечания',1120,y);y+=38;ctx.font='25px Arial';y=drawWrapped(ctx,req.details.notes,1120,y,1000,36)+10}
+ if(req.hours?.length){ctx.font='bold 28px Arial';ctx.fillText('שעות מאושרות / Подтверждённые часы',1120,y);y+=38;ctx.font='24px Arial';for(const hrec of req.hours.slice(0,12)){ctx.fillText(hrec.date+'   '+hrec.start+'–'+hrec.end+'   '+minLabel(hrec.minutes),1120,y);y+=34}}
+ y=Math.max(y+30,1050);ctx.font='25px Arial';y=drawWrapped(ctx,'אני מאשרת כי עברתי על סיכום השכר והפרטים המוצגים לעיל וכי הם נכונים לפי הידוע לי.',1120,y,1000,36);
+ ctx.direction='ltr';ctx.textAlign='left';y=drawWrapped(ctx,'Я подтверждаю, что ознакомилась с расчётом зарплаты и указанными выше данными, и они верны по имеющейся у меня информации.',120,y+8,1000,36);ctx.direction='rtl';ctx.textAlign='right';
+ ctx.font='bold 28px Arial';ctx.fillText('חתימת העובדת / Подпись работника',1120,y+45);
+ const sig=$('signatureCanvas');ctx.drawImage(sig,120,y+70,1000,280);
+ ctx.font='23px Arial';ctx.fillStyle='#52677d';ctx.fillText('נחתם בתאריך / Дата: '+new Date().toLocaleString('he-IL'),1120,y+385);ctx.fillText('מספר אישור: '+req.id,1120,y+425);
+ return cv
+}
+function jpegDataUrlToBytes(url){
+ const b64=url.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a
+}
+function signedPdfBlob(req){
+ const page=makeSignedDocumentCanvas(req),jpg=jpegDataUrlToBytes(page.toDataURL('image/jpeg',0.92)),enc=new TextEncoder(),parts=[],offsets=[0],pushText=s=>parts.push(enc.encode(s)),pushBytes=b=>parts.push(b);
+ pushText('%PDF-1.4\n%PDFDOC\n');
+ function obj(n,head,bytes){offsets[n]=parts.reduce((s,p)=>s+p.length,0);pushText(n+' 0 obj\n'+head);if(bytes){pushText('\nstream\n');pushBytes(bytes);pushText('\nendstream')}pushText('\nendobj\n')}
+ obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+ obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>');
+ obj(4,'<< /Type /XObject /Subtype /Image /Width '+page.width+' /Height '+page.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>',jpg);
+ const content=enc.encode('q\n595.28 0 0 841.89 0 0 cm\n/Im1 Do\nQ\n');obj(5,'<< /Length '+content.length+' >>',content);
+ const xref=parts.reduce((s,p)=>s+p.length,0);pushText('xref\n0 6\n0000000000 65535 f \n');for(let i=1;i<=5;i++)pushText(String(offsets[i]).padStart(10,'0')+' 00000 n \n');pushText('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+ return new Blob(parts,{type:'application/pdf'})
+}
+function ensureSignReady(){if(!$('signConfirm').checked)throw Error('יש לסמן אישור לסיכום השכר');if(!signatureDirty)throw Error('יש לחתום בחלון החתימה');if(!currentSignRequest)throw Error('בקשת החתימה אינה זמינה')}
+function signedFile(){ensureSignReady();const name='Nargiza-Salary-'+(currentSignRequest.details?.month||'')+'-Signed.pdf';return new File([signedPdfBlob(currentSignRequest)],name,{type:'application/pdf'})}
+async function saveSignedPdf(){
+ try{
+  const file=signedFile();
+  if(window.showSaveFilePicker){const h=await showSaveFilePicker({suggestedName:file.name,types:[{description:'PDF',accept:{'application/pdf':['.pdf']}}]});const w=await h.createWritable();await w.write(file);await w.close();alert('ה־PDF נשמר ✓')}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);alert('ה־PDF נשמר בתיקיית ההורדות ✓')}
+ }catch(e){if(e?.name!=='AbortError')alert(e.message||'לא ניתן לשמור PDF')}
+}
+async function shareSignedPdf(){
+ try{
+  const file=signedFile(),text='אנדרי, מצורף אישור סיכום שכר חתום עבור '+(currentSignRequest.details?.month||'')+'. / Андрей, прилагаю подписанное подтверждение расчёта зарплаты.';
+  if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'אישור שכר חתום',text});return}
+  await saveSignedPdf();window.open('https://wa.me/?text='+encodeURIComponent(text+'\nה־PDF נשמר בטלפון. יש לצרף אותו להודעה זו.'),'_blank','noopener')
+ }catch(e){if(e?.name!=='AbortError')alert(e.message||'לא ניתן לשתף את ה־PDF')}
+}
+
 function showPane(name){
  document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));$('pane-'+name).classList.remove('hidden');
  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.pane===name));
@@ -278,9 +426,12 @@ function showPane(name){
 function renderAll(){renderHours();renderPayments();renderHistory();renderArchive();renderDocs().catch(()=>{});calcForm()}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showPane(b.dataset.pane));
 ['fullBase','weekends','holidays','vacation','sick','otherPlus','medical','economy','deductions','notes'].forEach(id=>$(id).addEventListener('input',calcForm));
-$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('duplicateMonth').onclick=duplicateNext;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
+$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('sendForSignature').onclick=sendForSignature;$('duplicateMonth').onclick=duplicateNext;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
 $('payDate').value=new Date().toISOString().slice(0,10);
-fillMonth('2026-09');renderAll();persist('startup');
+if(location.hash.startsWith('#sign=')){
+ try{enterSignMode(decodeSignRequest(location.hash.slice(6)))}catch(e){alert('קישור החתימה אינו תקין');location.hash='';fillMonth('2026-09');renderAll()}
+}else{fillMonth('2026-09');renderAll();persist('startup')}
+$('saveSignedPdf').onclick=saveSignedPdf;$('shareSignedPdf').onclick=shareSignedPdf;
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
 </script>
