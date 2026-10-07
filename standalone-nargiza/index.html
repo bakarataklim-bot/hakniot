@@ -26,6 +26,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 .fileLabel{display:block;border:1px dashed #9eb6cf;border-radius:12px;padding:14px;text-align:center;background:#f7fbff;cursor:pointer}.fileLabel input{display:none}
 .restoreGrid{display:grid;gap:7px}.restoreRow{display:grid;grid-template-columns:92px 1fr 1fr 1.4fr 76px;gap:6px;align-items:center;border:1px solid #dde6ef;border-radius:10px;padding:7px;background:#fff}.restoreDate{font-weight:900;font-size:13px}.restoreRow input[type="checkbox"]{width:auto;justify-self:center}.restoreHead{background:#eef4fa;font-weight:900}.restoreHead div{text-align:center;font-size:12px;color:#40566d}@media(max-width:620px){.restoreRow{grid-template-columns:78px 1fr 1fr 62px}.restoreRow .restoreNote{grid-column:1/-1}.restoreHead{display:none}}
 
+.app.signing>header,.app.signing>main,.app.signing>.bottomState{display:none!important}
 .signMode{position:fixed;inset:0;z-index:100;background:#eef3f8;overflow:auto;padding:12px;direction:rtl}
 .signWrap{max-width:760px;margin:auto}.signHeader{background:linear-gradient(135deg,#1475de,#61a8ef);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
 .signSummary{background:#fff;border:1px solid #dce5ef;border-radius:16px;padding:14px;box-shadow:0 3px 14px #2030400d}
@@ -40,7 +41,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <body>
 <div class="app">
 <header>
-  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.4 · שעות ספטמבר מאושרות</div></div>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.5 · תיקון מסך חתימה</div></div>
 </header>
 <main>
   <section class="card employee">
@@ -172,6 +173,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
       <div style="font-size:24px;font-weight:900">✍️ אישור סיכום שכר</div>
       <div style="margin-top:4px">Подтверждение расчёта зарплаты</div>
     </div>
+    <div id="signLoadError" class="note danger hidden" style="margin-bottom:12px"></div>
     <div class="signSummary">
       <div style="font-weight:900;font-size:18px;margin-bottom:8px">נרגיזה נג'מייבה / NARGIZA NAJMIEVA</div>
       <div id="signSummaryBody"></div>
@@ -201,7 +203,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <script>
 (function(){
 'use strict';
-const VERSION='1.4-approved-september-hours';
+const VERSION='1.5-sign-screen-fix';
 const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=0, OT1=44, OT2=53;
 const LS='tik-nargiza-data-v1';
 const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
@@ -422,7 +424,11 @@ function buildSignRequest(){
 }
 function sendForSignature(){
  try{
-  const req=buildSignRequest(),payload=encodeSignRequest(req),url=location.origin+location.pathname+'#sign='+payload;
+  const req=buildSignRequest(),payload=encodeSignRequest(req);
+  // local round-trip validation before sending the link
+  const test=decodeSignRequest(payload);
+  if(!test||test.kind!=='tik-nargiza-sign-v1'||!test.details)throw Error('בדיקת קישור החתימה נכשלה');
+  const url=location.origin+location.pathname+'#sign='+payload;
   const msg='נרגיזה, מצורף קישור לאישור סיכום השכר. פתחי את הקישור, בדקי את הפרטים, חתמי עם האצבע ולחצי על "אשרי ושלחי". בסוף ייווצר קובץ PDF חתום לשליחה חזרה.\n\nНаргиза, откройте ссылку, проверьте расчёт зарплаты, подпишите пальцем и нажмите «Подтвердить и отправить». В конце будет создан подписанный PDF-файл для отправки обратно.\n\n'+url;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener')
  }catch(e){alert(e.message||'לא ניתן ליצור בקשת חתימה')}
@@ -443,13 +449,20 @@ function signSummaryRows(req){
  return rows
 }
 function enterSignMode(req){
- currentSignRequest=req;signatureDirty=false;document.querySelector('.app').classList.add('hidden');$('signMode').classList.remove('hidden');
+ if(!req||req.kind!=='tik-nargiza-sign-v1'||!req.details)throw Error('נתוני החתימה חסרים או לא תקינים');
+ currentSignRequest=req;signatureDirty=false;
+ const app=document.querySelector('.app'),sign=$('signMode'),err=$('signLoadError');
+ if(!app||!sign)throw Error('מסך החתימה לא נמצא');
+ if(err){err.classList.add('hidden');err.textContent=''}
+ app.classList.add('signing');
+ sign.classList.remove('hidden');
  const rows=signSummaryRows(req),x=req.details||{};
  $('signSummaryBody').innerHTML=rows.map(r=>'<div class="signLine"><b>'+escapeHtml(r[0])+'</b><span>'+escapeHtml(r[1])+'</span></div>').join('')+
  '<div class="signLine"><b>סה״כ לתשלום / Итого</b><span class="signTotal">'+escapeHtml(money(x.total||0))+'</span></div>'+
  (x.notes?'<div class="note" style="margin-top:10px"><b>הערות / Примечания:</b><br>'+escapeHtml(x.notes)+'</div>':'')+
  (req.hours&&req.hours.length?'<div class="note" style="margin-top:10px"><b>שעות מאושרות / Подтверждённые часы:</b><br>'+req.hours.map(h=>escapeHtml(h.date+' '+h.start+'–'+h.end+' ('+minLabel(h.minutes)+')')).join('<br>')+'</div>':'');
- setupSignatureCanvas()
+ setupSignatureCanvas();
+ window.scrollTo(0,0)
 }
 function setupSignatureCanvas(){
  const cv=$('signatureCanvas'),ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.lineWidth=5;ctx.lineCap='round';ctx.strokeStyle='#172235';let down=false,last=null;
@@ -529,7 +542,17 @@ $('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMon
 $('payDate').value=new Date().toISOString().slice(0,10);
 attachTimeTyping();
 if(location.hash.startsWith('#sign=')){
- try{enterSignMode(decodeSignRequest(location.hash.slice(6)))}catch(e){alert('קישור החתימה אינו תקין');location.hash='';fillMonth('2026-09');renderAll()}
+ try{
+   const req=decodeSignRequest(location.hash.slice(6));
+   enterSignMode(req)
+ }catch(e){
+   console.error('signature screen load',e);
+   const app=document.querySelector('.app'),sign=$('signMode'),err=$('signLoadError');
+   if(app)app.classList.remove('signing');
+   if(sign)sign.classList.add('hidden');
+   fillMonth('2026-09');renderAll();
+   alert('לא ניתן לפתוח את מסך החתימה: '+String(e?.message||e))
+ }
 }else{fillMonth('2026-09');renderAll();persist('startup')}
 $('saveSignedPdf').onclick=saveSignedPdf;$('shareSignedPdf').onclick=shareSignedPdf;
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
