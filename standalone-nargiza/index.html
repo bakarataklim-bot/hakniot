@@ -40,7 +40,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <body>
 <div class="app">
 <header>
-  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.3 · שעות ידניות</div></div>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.4 · שעות ספטמבר מאושרות</div></div>
 </header>
 <main>
   <section class="card employee">
@@ -83,6 +83,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
       </div>
       <div class="note" id="baseNote" style="margin-top:10px"></div>
       <div class="note" style="margin-top:8px">🧮 שבת: 440 ₪ לכל שבת. שעות: 8 השעות הראשונות ביום כלולות בבסיס; שעות 9–10 ב־44 ₪ לשעה, ומהשעה ה־11 ב־53 ₪ לשעה.</div>
+      <div id="monthHoursSummary" class="note ok" style="margin-top:10px"></div>
       <div class="total"><span>סה״כ לתשלום</span><b id="total">₪0.00</b></div>
       <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="primary" id="sendForSignature">📲 שלח לנרגיזה לחתימה</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
     </div>
@@ -200,7 +201,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <script>
 (function(){
 'use strict';
-const VERSION='1.3-manual-time-input';
+const VERSION='1.4-approved-september-hours';
 const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=0, OT1=44, OT2=53;
 const LS='tik-nargiza-data-v1';
 const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
@@ -208,15 +209,28 @@ const $=id=>document.getElementById(id);
 const round2=n=>Math.round((Number(n||0)+Number.EPSILON)*100)/100;
 const money=n=>'₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2});
 const uid=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);
+const SEP_APPROVED_HOURS=[
+ {id:'sep-2026-09-13-a',date:'2026-09-13',start:'09:45',end:'21:00',note:'שחזור מאושר',approved:true,restoreBatch:'approved-paper-2026-09'},
+ {id:'sep-2026-09-14-a',date:'2026-09-14',start:'08:30',end:'18:00',note:'שחזור מאושר',approved:true,restoreBatch:'approved-paper-2026-09'},
+ {id:'sep-2026-09-15-a',date:'2026-09-15',start:'08:25',end:'16:00',note:'שחזור מאושר',approved:true,restoreBatch:'approved-paper-2026-09'},
+ {id:'sep-2026-09-15-b',date:'2026-09-15',start:'22:00',end:'04:00',note:'שחזור מאושר · ממשיך ליום הבא',approved:true,restoreBatch:'approved-paper-2026-09',_extraSegment:true},
+ {id:'sep-2026-09-16-a',date:'2026-09-16',start:'09:00',end:'18:25',note:'שחזור מאושר',approved:true,restoreBatch:'approved-paper-2026-09'}
+];
 let state=load();
 
-function fresh(){return {kind:'tik-nargiza',version:2,base:{startDate:START_DATE,monthly:DEFAULT_BASE},months:{},hours:[],payments:[],archives:[],updatedAt:Date.now()}}
+function fresh(){return {kind:'tik-nargiza',version:3,base:{startDate:START_DATE,monthly:DEFAULT_BASE},months:{},hours:SEP_APPROVED_HOURS.map(x=>({...x,createdAt:Date.now()})),payments:[],archives:[],updatedAt:Date.now()}}
 function load(){try{const x=JSON.parse(localStorage.getItem(LS)||'null');if(x&&x.kind==='tik-nargiza')return migrate(x)}catch(e){}return fresh()}
 function migrate(x){
  x.base=x.base||{startDate:START_DATE,monthly:DEFAULT_BASE};x.months=x.months||{};x.hours=Array.isArray(x.hours)?x.hours:[];x.payments=Array.isArray(x.payments)?x.payments:[];x.archives=Array.isArray(x.archives)?x.archives:[];
  if(Number(x.version||1)<2){
    Object.values(x.months).forEach(m=>{if(Number(m?.medicalDeduction)===140.86)m.medicalDeduction=0});
    x.version=2;
+ }
+ if(Number(x.version||1)<3){
+   const fixedDates=new Set(['2026-09-13','2026-09-14','2026-09-15','2026-09-16']);
+   x.hours=x.hours.filter(h=>!fixedDates.has(String(h?.date||'')));
+   x.hours.push(...SEP_APPROVED_HOURS.map(h=>({...h,createdAt:Date.now()})));
+   x.version=3;
  }
  return x
 }
@@ -257,14 +271,35 @@ function normalizeTimeInput(v){
 }
 function minBetween(start,end){start=normalizeTimeInput(start);end=normalizeTimeInput(end);if(!start||!end)return 0;const a=start.split(':').map(Number),b=end.split(':').map(Number);let s=a[0]*60+a[1],e=b[0]*60+b[1];if(e<s)e+=1440;return Math.max(0,e-s)}
 function approvedHoursForMonth(month){
- const byDay={};state.hours.filter(x=>x.approved&&String(x.date).startsWith(month)).forEach(x=>{byDay[x.date]=(byDay[x.date]||0)+minBetween(x.start,x.end)});
- let otMinutes=0,amount=0;Object.values(byDay).forEach(total=>{const ot=Math.max(0,total-480),m1=Math.min(120,ot),m2=Math.max(0,ot-120);otMinutes+=ot;amount+=OT1*m1/60+OT2*m2/60});
- return {minutes:Math.round(otMinutes),amount:round2(amount)}
+ const byDay={};
+ state.hours.filter(x=>x.approved&&String(x.date).startsWith(month)).forEach(x=>{
+   if(!byDay[x.date])byDay[x.date]={minutes:0,segments:[]};
+   const mins=minBetween(x.start,x.end);byDay[x.date].minutes+=mins;byDay[x.date].segments.push({start:x.start,end:x.end,minutes:mins})
+ });
+ let otMinutes=0,amount=0,totalMinutes=0;
+ const days=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,d])=>{
+   totalMinutes+=d.minutes;const ot=Math.max(0,d.minutes-480),m1=Math.min(120,ot),m2=Math.max(0,ot-120),dayAmount=round2(OT1*m1/60+OT2*m2/60);
+   otMinutes+=ot;amount+=dayAmount;return {date,totalMinutes:d.minutes,overtimeMinutes:ot,amount:dayAmount,segments:d.segments}
+ });
+ return {minutes:Math.round(otMinutes),amount:round2(amount),totalMinutes:Math.round(totalMinutes),days}
 }
 function minLabel(m){m=Math.max(0,Math.round(m||0));const h=Math.floor(m/60),mm=m%60;return h+(mm?':'+String(mm).padStart(2,'0'):'')+' שעות'}
+function renderMonthHoursSummary(month,ot){
+ const box=$('monthHoursSummary');if(!box)return;
+ if(!ot?.days?.length){box.innerHTML='<b>⏱️ שעות מאושרות</b><br><span class="muted">אין שעות מאושרות בחודש הזה.</span>';return}
+ const lines=ot.days.map(d=>{
+   const seg=d.segments.map(s=>s.start+'–'+s.end).join(' + ');
+   return '<div style="margin-top:5px"><b>'+d.date.slice(8,10)+'/09</b> · '+escapeHtml(seg)+' · סה״כ '+minLabel(d.totalMinutes)+' · נוספות '+minLabel(d.overtimeMinutes)+' · <b>'+money(d.amount)+'</b></div>'
+ }).join('');
+ box.innerHTML='<b>⏱️ סיכום שעות מאושרות לפני חתימה</b>'+
+ '<div style="margin-top:7px;font-size:16px"><b>סה״כ שעות עבודה: '+minLabel(ot.totalMinutes)+'</b></div>'+
+ '<div style="font-size:16px"><b>סה״כ שעות נוספות: '+minLabel(ot.minutes)+'</b></div>'+
+ '<div style="font-size:16px"><b>תוספת שעות נוספות: '+money(ot.amount)+'</b></div>'+
+ '<div style="margin-top:8px;border-top:1px solid #cfe3d5;padding-top:5px">'+lines+'</div>'
+}
 function calcForm(){
  const month=$('month').value,full=Math.max(0,Number($('fullBase').value||0)),p=proration(month,full),wc=Math.max(0,Math.floor(Number($('weekends').value||0))),hc=Math.max(0,Math.floor(Number($('holidays').value||0))),ot=approvedHoursForMonth(month);
- $('base').value=p.base.toFixed(2);$('weekendAmount').value=(WEEKEND_PAY*wc).toFixed(2);$('holidayAmount').value=(holidayRate(full)*hc).toFixed(2);$('otLabel').value=minLabel(ot.minutes);$('otAmount').value=ot.amount.toFixed(2);
+ $('base').value=p.base.toFixed(2);$('weekendAmount').value=(WEEKEND_PAY*wc).toFixed(2);$('holidayAmount').value=(holidayRate(full)*hc).toFixed(2);$('otLabel').value=minLabel(ot.minutes);$('otAmount').value=ot.amount.toFixed(2);renderMonthHoursSummary(month,ot);
  $('baseNote').innerHTML=p.partial&&p.total?'🧮 חודש ראשון חלקי: <b>'+money(full)+' ÷ '+p.total+' ימים ללא שבת × '+p.worked+' ימים = '+money(p.base)+'</b>':'🧮 חודש מלא: שכר בסיס <b>'+money(p.base)+'</b>';
  const total=round2(p.base+WEEKEND_PAY*wc+holidayRate(full)*hc+Number($('otherPlus').value||0)+ot.amount-Number($('medical').value||0)-Number($('economy').value||0)-Number($('deductions').value||0));
  $('total').textContent=money(total);return {month,fullMonthlyBase:full,base:p.base,baseProrated:p.partial,baseTotalNonSaturday:p.total,baseWorkedNonSaturday:p.worked,weekendsCount:wc,weekendsAmount:round2(WEEKEND_PAY*wc),holidaysCount:hc,holidaysAmount:round2(holidayRate(full)*hc),vacationDays:Number($('vacation').value||0),sickDays:Number($('sick').value||0),otherPlus:Number($('otherPlus').value||0),overtimeMinutes:ot.minutes,overtimeAmount:ot.amount,medicalDeduction:Number($('medical').value||0),economyDeduction:Number($('economy').value||0),deductions:Number($('deductions').value||0),notes:$('notes').value.trim(),total,updatedAt:Date.now()}
@@ -398,6 +433,7 @@ function signSummaryRows(req){
   ['שכר בסיס / Базовая зарплата',money(x.base||0)],
   ['שבתות / Субботы',(x.weekendsCount||0)+' · '+money(x.weekendsAmount||0)],
   ['חגים / Праздники',(x.holidaysCount||0)+' · '+money(x.holidaysAmount||0)],
+  ['סה״כ שעות עבודה / Всего часов',minLabel((req.hours||[]).reduce((s,h)=>s+Number(h.minutes||0),0))],
   ['שעות נוספות / Сверхурочные',minLabel(x.overtimeMinutes||0)+' · '+money(x.overtimeAmount||0)],
   ['תוספות אחרות / Другие доплаты',money(x.otherPlus||0)],
   ['ביטוח רפואי / Мед. страховка','− '+money(x.medicalDeduction||0)],
