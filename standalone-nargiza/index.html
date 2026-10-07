@@ -24,6 +24,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 .bottomState{position:fixed;bottom:0;left:0;right:0;z-index:15;background:#fff;border-top:1px solid #d8e2ec;padding:8px 12px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px #0001}
 .bottomInner{max-width:860px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.bottomInner small{color:#596c80}.savePulse{color:#14783c;font-weight:900}
 .fileLabel{display:block;border:1px dashed #9eb6cf;border-radius:12px;padding:14px;text-align:center;background:#f7fbff;cursor:pointer}.fileLabel input{display:none}
+.restoreGrid{display:grid;gap:7px}.restoreRow{display:grid;grid-template-columns:92px 1fr 1fr 1.4fr 76px;gap:6px;align-items:center;border:1px solid #dde6ef;border-radius:10px;padding:7px;background:#fff}.restoreDate{font-weight:900;font-size:13px}.restoreRow input[type="checkbox"]{width:auto;justify-self:center}.restoreHead{background:#eef4fa;font-weight:900}.restoreHead div{text-align:center;font-size:12px;color:#40566d}@media(max-width:620px){.restoreRow{grid-template-columns:78px 1fr 1fr 62px}.restoreRow .restoreNote{grid-column:1/-1}.restoreHead{display:none}}
 
 .signMode{position:fixed;inset:0;z-index:100;background:#eef3f8;overflow:auto;padding:12px;direction:rtl}
 .signWrap{max-width:760px;margin:auto}.signHeader{background:linear-gradient(135deg,#1475de,#61a8ef);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
@@ -39,7 +40,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <body>
 <div class="app">
 <header>
-  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.1 · חתימה + PDF</div></div>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.2 · שחזור ספטמבר</div></div>
 </header>
 <main>
   <section class="card employee">
@@ -88,6 +89,12 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
   </section>
 
   <section class="pane hidden" id="pane-hours">
+    <div class="card">
+      <h3>📅 שחזור מהיר — ספטמבר 2026</h3>
+      <div class="note warn">הזן כאן את השעות שיש לך לכל יום. אם היו שני מקטעים באותו יום, שמור את הראשון כאן ואת המקטע הנוסף דרך "הוסף מקטע שעות" למטה.</div>
+      <div class="actions"><button class="primary" id="buildSeptemberGrid">🗓️ פתח טבלת ספטמבר</button><button class="secondary" id="saveSeptemberGrid">💾 שמור את כל ספטמבר</button></div>
+      <div id="septemberRestoreGrid" style="margin-top:10px"></div>
+    </div>
     <div class="card">
       <h3>⏱️ שחזור / הזנת שעות</h3>
       <div class="note">אפשר להזין כמה מקטעים באותו יום. המערכת מחברת את כל המקטעים של אותו תאריך ומחשבת שעות נוספות רק לאחר אישור.</div>
@@ -193,7 +200,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <script>
 (function(){
 'use strict';
-const VERSION='1.1-signature-pdf';
+const VERSION='1.2-september-restore';
 const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=140.86, OT1=44, OT2=53;
 const LS='tik-nargiza-data-v1';
 const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
@@ -255,7 +262,7 @@ function duplicateNext(){
 function addHour(){
  const date=$('hourDate').value,start=$('hourStart').value,end=$('hourEnd').value;if(!date||!start||!end)return alert('מלא תאריך, התחלה וסיום');
  const mins=minBetween(start,end);if(!(mins>0))return alert('שעות לא תקינות');
- state.hours.push({id:uid(),date,start,end,note:$('hourNote').value.trim(),approved:false,createdAt:Date.now()});persist('add-hour');$('hourStart').value='';$('hourEnd').value='';$('hourNote').value='';renderHours();calcForm()
+ state.hours.push({id:uid(),date,start,end,note:$('hourNote').value.trim(),approved:false,createdAt:Date.now(),_extraSegment:String(date).startsWith('2026-09')});persist('add-hour');$('hourStart').value='';$('hourEnd').value='';$('hourNote').value='';renderHours();calcForm()
 }
 function renderHours(){
  const root=$('hoursList'),a=[...state.hours].sort((x,y)=>(y.date+y.start).localeCompare(x.date+x.start));if(!a.length){root.innerHTML='<div class="muted">עדיין אין דיווחי שעות.</div>';return}
@@ -309,6 +316,33 @@ async function renderSnapshots(){
  const root=$('snapshotsList'),a=(await idbAll('snapshots')).sort((a,b)=>b.savedAt-a.savedAt).slice(0,15);if(!a.length){root.innerHTML='<div class="muted">עדיין אין גרסאות מקומיות.</div>';return}
  root.innerHTML=a.map(x=>'<div class="row"><div class="rowTop"><div><b>'+new Date(x.savedAt).toLocaleString('he-IL')+'</b><div class="muted">'+escapeHtml(x.reason||'שמירה')+'</div></div><button class="secondary" data-restoresnap="'+x.id+'">שחזר</button></div></div>').join('');
  root.querySelectorAll('[data-restoresnap]').forEach(b=>b.onclick=()=>{const x=a.find(v=>v.id===b.dataset.restoresnap);if(!x||!confirm('לשחזר את הגרסה המקומית הזאת?'))return;state=migrate(JSON.parse(JSON.stringify(x.data)));localStorage.setItem(LS,JSON.stringify(state));persist('restore-snapshot');renderAll();fillMonth(Object.keys(state.months).sort().pop()||'2026-09')})
+}
+
+
+function septemberDates(){
+ const out=[];for(let d=2;d<=30;d++)out.push('2026-09-'+String(d).padStart(2,'0'));return out
+}
+function buildSeptemberRestoreGrid(){
+ const root=$('septemberRestoreGrid');if(!root)return;
+ const byDate={};state.hours.filter(h=>String(h.date).startsWith('2026-09')).forEach(h=>{if(!byDate[h.date])byDate[h.date]=h});
+ root.innerHTML='<div class="restoreGrid"><div class="restoreRow restoreHead"><div>תאריך</div><div>התחלה</div><div>סיום</div><div>הערה</div><div>מאושר</div></div>'+
+ septemberDates().map(date=>{const h=byDate[date]||{};return '<div class="restoreRow" data-sep-date="'+date+'"><div class="restoreDate">'+date.slice(8,10)+'/09</div><input data-sep-start type="time" value="'+escapeHtml(h.start||'')+'"><input data-sep-end type="time" value="'+escapeHtml(h.end||'')+'"><input class="restoreNote" data-sep-note type="text" placeholder="הערה" value="'+escapeHtml(h.note||'')+'"><input data-sep-approved type="checkbox" '+(h.approved?'checked':'')+'></div>'}).join('')+'</div>'
+}
+function saveSeptemberRestoreGrid(){
+ const rows=[...document.querySelectorAll('[data-sep-date]')];if(!rows.length)return alert('פתח קודם את טבלת ספטמבר');
+ const otherSegments=state.hours.filter(h=>!String(h.date).startsWith('2026-09') || h._extraSegment);
+ const rebuilt=[];
+ for(const row of rows){
+   const date=row.dataset.sepDate,start=row.querySelector('[data-sep-start]').value,end=row.querySelector('[data-sep-end]').value,note=row.querySelector('[data-sep-note]').value.trim(),approved=row.querySelector('[data-sep-approved]').checked;
+   if(!start&&!end&&!note)continue;
+   if(!start||!end){alert('חסרה שעת התחלה או סיום בתאריך '+date);return}
+   if(!(minBetween(start,end)>0)){alert('שעות לא תקינות בתאריך '+date);return}
+   rebuilt.push({id:uid(),date,start,end,note,approved,createdAt:Date.now(),restoreBatch:'2026-09'})
+ }
+ // preserve any extra segments added manually for September
+ const extras=state.hours.filter(h=>String(h.date).startsWith('2026-09')&&h._extraSegment);
+ state.hours=otherSegments.filter(h=>!String(h.date).startsWith('2026-09')).concat(rebuilt,extras);
+ persist('restore-september-2026');renderHours();fillMonth('2026-09');renderHistory();alert('ספטמבר נשמר ✓\n'+rebuilt.length+' ימי עבודה נשמרו וחישוב השעות הנוספות עודכן.')
 }
 
 let currentSignRequest=null,signatureDirty=false;
@@ -421,12 +455,12 @@ async function shareSignedPdf(){
 function showPane(name){
  document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));$('pane-'+name).classList.remove('hidden');
  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.pane===name));
- if(name==='docs')renderDocs();if(name==='backup')renderSnapshots();if(name==='archive')renderArchive();if(name==='history')renderHistory()
+ if(name==='docs')renderDocs();if(name==='backup')renderSnapshots();if(name==='archive')renderArchive();if(name==='history')renderHistory();if(name==='hours')buildSeptemberRestoreGrid()
 }
 function renderAll(){renderHours();renderPayments();renderHistory();renderArchive();renderDocs().catch(()=>{});calcForm()}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showPane(b.dataset.pane));
 ['fullBase','weekends','holidays','vacation','sick','otherPlus','medical','economy','deductions','notes'].forEach(id=>$(id).addEventListener('input',calcForm));
-$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('sendForSignature').onclick=sendForSignature;$('duplicateMonth').onclick=duplicateNext;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
+$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('sendForSignature').onclick=sendForSignature;$('duplicateMonth').onclick=duplicateNext;$('buildSeptemberGrid').onclick=buildSeptemberRestoreGrid;$('saveSeptemberGrid').onclick=saveSeptemberRestoreGrid;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
 $('payDate').value=new Date().toISOString().slice(0,10);
 if(location.hash.startsWith('#sign=')){
  try{enterSignMode(decodeSignRequest(location.hash.slice(6)))}catch(e){alert('קישור החתימה אינו תקין');location.hash='';fillMonth('2026-09');renderAll()}
