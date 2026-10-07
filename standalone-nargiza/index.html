@@ -41,7 +41,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <body>
 <div class="app">
 <header>
-  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.5 · תיקון מסך חתימה</div></div>
+  <div class="headrow"><div><div class="title">💼 תיק נרגיזה</div><div class="sub">שכר · שעות · תשלומים · מסמכים · גיבוי מקומי</div></div><div class="version">v1.6 · אישור קבלת תשלום</div></div>
 </header>
 <main>
   <section class="card employee">
@@ -86,7 +86,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
       <div class="note" style="margin-top:8px">🧮 שבת: 440 ₪ לכל שבת. שעות: 8 השעות הראשונות ביום כלולות בבסיס; שעות 9–10 ב־44 ₪ לשעה, ומהשעה ה־11 ב־53 ₪ לשעה.</div>
       <div id="monthHoursSummary" class="note ok" style="margin-top:10px"></div>
       <div class="total"><span>סה״כ לתשלום</span><b id="total">₪0.00</b></div>
-      <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="primary" id="sendForSignature">📲 שלח לנרגיזה לחתימה</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
+      <div class="actions"><button class="primary" id="saveMonth">💾 שמור חודש</button><button class="primary" id="sendForSignature">📲 שלח לנרגיזה לאישור קבלת תשלום</button><button class="secondary" id="duplicateMonth">📄 העתק לחודש הבא</button></div>
     </div>
   </section>
 
@@ -170,28 +170,28 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <div id="signMode" class="signMode hidden">
   <div class="signWrap">
     <div class="signHeader">
-      <div style="font-size:24px;font-weight:900">✍️ אישור סיכום שכר</div>
-      <div style="margin-top:4px">Подтверждение расчёта зарплаты</div>
+      <div style="font-size:24px;font-weight:900">✍️ אישור קבלת תשלום</div>
+      <div style="margin-top:4px">Подтверждение получения оплаты</div>
     </div>
     <div id="signLoadError" class="note danger hidden" style="margin-bottom:12px"></div>
     <div class="signSummary">
       <div style="font-weight:900;font-size:18px;margin-bottom:8px">נרגיזה נג'מייבה / NARGIZA NAJMIEVA</div>
       <div id="signSummaryBody"></div>
       <div class="note" style="margin-top:12px">
-        אני מאשרת כי עברתי על סיכום השכר והפרטים המוצגים לעיל וכי הם נכונים לפי הידוע לי.
-        <div class="signHintRu">Я подтверждаю, что ознакомилась с расчётом зарплаты и указанными выше данными, и они верны по имеющейся у меня информации.</div>
+        <div id="paymentReceiptStatement"></div>
+        <div id="paymentReceiptStatementRu" class="signHintRu"></div>
       </div>
     </div>
     <div class="signatureBox">
       <h3>חתימה ידנית / Подпись</h3>
       <canvas id="signatureCanvas" class="signatureCanvas" width="1000" height="360"></canvas>
       <div class="signChecks">
-        <label><input id="signConfirm" type="checkbox"> <span>אני מאשרת את סיכום השכר / Я подтверждаю расчёт зарплаты</span></label>
+        <label><input id="signConfirm" type="checkbox"> <span>אני מאשרת שקיבלתי את מלוא הסכום / Я подтверждаю получение полной суммы</span></label>
       </div>
       <div class="actions">
         <button id="clearSignature" class="secondary">נקה חתימה / Очистить</button>
         <button id="saveSignedPdf" class="secondary">💾 שמור PDF בטלפון</button>
-        <button id="shareSignedPdf" class="primary">✅ אשרי ושלחי</button>
+        <button id="shareSignedPdf" class="primary">✅ אשרי קבלת תשלום ושלחי</button>
       </div>
       <div class="note ok" style="margin-top:10px">החתימה וה־PDF נוצרים במכשיר הזה. הם אינם נשמרים בענן. / Подпись и PDF создаются на этом устройстве и не сохраняются в облаке.</div>
     </div>
@@ -203,7 +203,7 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 <script>
 (function(){
 'use strict';
-const VERSION='1.5-sign-screen-fix';
+const VERSION='1.6-payment-receipt';
 const START_DATE='2026-09-02', DEFAULT_BASE=6000, WEEKEND_PAY=440, MEDICAL_DEFAULT=0, OT1=44, OT2=53;
 const LS='tik-nargiza-data-v1';
 const DB_NAME='tik-nargiza-idb-v1', DB_VER=1;
@@ -429,7 +429,7 @@ function sendForSignature(){
   const test=decodeSignRequest(payload);
   if(!test||test.kind!=='tik-nargiza-sign-v1'||!test.details)throw Error('בדיקת קישור החתימה נכשלה');
   const url=location.origin+location.pathname+'#sign='+payload;
-  const msg='נרגיזה, מצורף קישור לאישור סיכום השכר. פתחי את הקישור, בדקי את הפרטים, חתמי עם האצבע ולחצי על "אשרי ושלחי". בסוף ייווצר קובץ PDF חתום לשליחה חזרה.\n\nНаргиза, откройте ссылку, проверьте расчёт зарплаты, подпишите пальцем и нажмите «Подтвердить и отправить». В конце будет создан подписанный PDF-файл для отправки обратно.\n\n'+url;
+  const msg='נרגיזה, לאחר קבלת התשלום פתחי את הקישור, בדקי את פירוט השכר והסכום שקיבלת, חתמי עם האצבע ולחצי על "אשרי קבלת תשלום ושלחי". בסוף ייווצר PDF חתום לשליחה חזרה.\n\nНаргиза, после получения оплаты откройте ссылку, проверьте расчёт и полученную сумму, подпишите пальцем и нажмите «Подтвердить получение оплаты и отправить». В конце будет создан подписанный PDF-файл для отправки обратно.\n\n'+url;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener')
  }catch(e){alert(e.message||'לא ניתן ליצור בקשת חתימה')}
 }
@@ -461,6 +461,10 @@ function enterSignMode(req){
  '<div class="signLine"><b>סה״כ לתשלום / Итого</b><span class="signTotal">'+escapeHtml(money(x.total||0))+'</span></div>'+
  (x.notes?'<div class="note" style="margin-top:10px"><b>הערות / Примечания:</b><br>'+escapeHtml(x.notes)+'</div>':'')+
  (req.hours&&req.hours.length?'<div class="note" style="margin-top:10px"><b>שעות מאושרות / Подтверждённые часы:</b><br>'+req.hours.map(h=>escapeHtml(h.date+' '+h.start+'–'+h.end+' ('+minLabel(h.minutes)+')')).join('<br>')+'</div>':'');
+ const receiptHe='אני, נרגיזה נג\'מייבה, מאשרת שקיבלתי בפועל את מלוא הסכום '+money(x.total||0)+' עבור שכר חודש '+String(x.month||'')+', לאחר שעברתי על פירוט השכר המוצג לעיל.';
+ const receiptRu='Я, Наргиза Наджмиева, подтверждаю, что фактически получила полную сумму '+money(x.total||0)+' в качестве заработной платы за месяц '+String(x.month||'')+', после ознакомления с приведённым выше расчётом.';
+ if($('paymentReceiptStatement'))$('paymentReceiptStatement').innerHTML='<b>'+escapeHtml(receiptHe)+'</b>';
+ if($('paymentReceiptStatementRu'))$('paymentReceiptStatementRu').textContent=receiptRu;
  setupSignatureCanvas();
  window.scrollTo(0,0)
 }
@@ -479,18 +483,21 @@ function drawWrapped(ctx,text,x,y,maxWidth,lineHeight){
 }
 function makeSignedDocumentCanvas(req){
  const w=1240,h=1754,cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.direction='rtl';ctx.textAlign='right';ctx.fillStyle='#172235';
- ctx.font='bold 54px Arial';ctx.fillText('אישור סיכום שכר',1120,90);ctx.font='30px Arial';ctx.fillText('Подтверждение расчёта зарплаты',1120,135);
+ ctx.font='bold 54px Arial';ctx.fillText('אישור קבלת תשלום',1120,90);ctx.font='30px Arial';ctx.fillText('Подтверждение получения оплаты',1120,135);
  ctx.strokeStyle='#1d72d8';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(120,165);ctx.lineTo(1120,165);ctx.stroke();
  let y=230;ctx.font='bold 34px Arial';ctx.fillText('נרגיזה נג\'מייבה / NARGIZA NAJMIEVA',1120,y);y+=65;
  ctx.font='29px Arial';for(const r of signSummaryRows(req)){ctx.fillText(r[0],1120,y);ctx.textAlign='left';ctx.fillText(r[1],120,y);ctx.textAlign='right';y+=50}
  ctx.fillStyle='#1262b8';ctx.font='bold 42px Arial';ctx.fillText('סה״כ לתשלום / Итого',1120,y);ctx.textAlign='left';ctx.fillText(money(req.details?.total||0),120,y);ctx.textAlign='right';ctx.fillStyle='#172235';y+=75;
  if(req.details?.notes){ctx.font='bold 28px Arial';ctx.fillText('הערות / Примечания',1120,y);y+=38;ctx.font='25px Arial';y=drawWrapped(ctx,req.details.notes,1120,y,1000,36)+10}
  if(req.hours?.length){ctx.font='bold 28px Arial';ctx.fillText('שעות מאושרות / Подтверждённые часы',1120,y);y+=38;ctx.font='24px Arial';for(const hrec of req.hours.slice(0,12)){ctx.fillText(hrec.date+'   '+hrec.start+'–'+hrec.end+'   '+minLabel(hrec.minutes),1120,y);y+=34}}
- y=Math.max(y+30,1050);ctx.font='25px Arial';y=drawWrapped(ctx,'אני מאשרת כי עברתי על סיכום השכר והפרטים המוצגים לעיל וכי הם נכונים לפי הידוע לי.',1120,y,1000,36);
- ctx.direction='ltr';ctx.textAlign='left';y=drawWrapped(ctx,'Я подтверждаю, что ознакомилась с расчётом зарплаты и указанными выше данными, и они верны по имеющейся у меня информации.',120,y+8,1000,36);ctx.direction='rtl';ctx.textAlign='right';
+ y=Math.max(y+30,1050);ctx.font='25px Arial';
+ const receiptHe='אני, נרגיזה נג\'מייבה, מאשרת שקיבלתי בפועל את מלוא הסכום '+money(req.details?.total||0)+' עבור שכר חודש '+String(req.details?.month||'')+', לאחר שעברתי על פירוט השכר המוצג לעיל.';
+ const receiptRu='Я, Наргиза Наджмиева, подтверждаю, что фактически получила полную сумму '+money(req.details?.total||0)+' в качестве заработной платы за месяц '+String(req.details?.month||'')+', после ознакомления с приведённым выше расчётом.';
+ y=drawWrapped(ctx,receiptHe,1120,y,1000,36);
+ ctx.direction='ltr';ctx.textAlign='left';y=drawWrapped(ctx,receiptRu,120,y+8,1000,36);ctx.direction='rtl';ctx.textAlign='right';
  ctx.font='bold 28px Arial';ctx.fillText('חתימת העובדת / Подпись работника',1120,y+45);
  const sig=$('signatureCanvas');ctx.drawImage(sig,120,y+70,1000,280);
- ctx.font='23px Arial';ctx.fillStyle='#52677d';ctx.fillText('נחתם בתאריך / Дата: '+new Date().toLocaleString('he-IL'),1120,y+385);ctx.fillText('מספר אישור: '+req.id,1120,y+425);
+ ctx.font='23px Arial';ctx.fillStyle='#52677d';ctx.fillText('תאריך אישור קבלת התשלום / Дата подтверждения получения оплаты: '+new Date().toLocaleString('he-IL'),1120,y+385);ctx.fillText('מספר אישור: '+req.id,1120,y+425);
  return cv
 }
 function jpegDataUrlToBytes(url){
@@ -507,8 +514,8 @@ function signedPdfBlob(req){
  const xref=parts.reduce((s,p)=>s+p.length,0);pushText('xref\n0 6\n0000000000 65535 f \n');for(let i=1;i<=5;i++)pushText(String(offsets[i]).padStart(10,'0')+' 00000 n \n');pushText('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
  return new Blob(parts,{type:'application/pdf'})
 }
-function ensureSignReady(){if(!$('signConfirm').checked)throw Error('יש לסמן אישור לסיכום השכר');if(!signatureDirty)throw Error('יש לחתום בחלון החתימה');if(!currentSignRequest)throw Error('בקשת החתימה אינה זמינה')}
-function signedFile(){ensureSignReady();const name='Nargiza-Salary-'+(currentSignRequest.details?.month||'')+'-Signed.pdf';return new File([signedPdfBlob(currentSignRequest)],name,{type:'application/pdf'})}
+function ensureSignReady(){if(!$('signConfirm').checked)throw Error('יש לסמן אישור שקיבלת את מלוא התשלום');if(!signatureDirty)throw Error('יש לחתום בחלון החתימה');if(!currentSignRequest)throw Error('בקשת החתימה אינה זמינה')}
+function signedFile(){ensureSignReady();const name='Nargiza-Payment-Receipt-'+(currentSignRequest.details?.month||'')+'-Signed.pdf';return new File([signedPdfBlob(currentSignRequest)],name,{type:'application/pdf'})}
 async function saveSignedPdf(){
  try{
   const file=signedFile();
@@ -518,8 +525,8 @@ async function saveSignedPdf(){
 }
 async function shareSignedPdf(){
  try{
-  const file=signedFile(),text='אנדרי, מצורף אישור סיכום שכר חתום עבור '+(currentSignRequest.details?.month||'')+'. / Андрей, прилагаю подписанное подтверждение расчёта зарплаты.';
-  if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'אישור שכר חתום',text});return}
+  const file=signedFile(),text='אנדרי, מצורף אישור חתום שקיבלתי את התשלום עבור שכר חודש '+(currentSignRequest.details?.month||'')+'. / Андрей, прилагаю подписанное подтверждение получения оплаты за месяц '+(currentSignRequest.details?.month||'')+'.';
+  if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'אישור קבלת תשלום חתום',text});return}
   await saveSignedPdf();window.open('https://wa.me/?text='+encodeURIComponent(text+'\nה־PDF נשמר בטלפון. יש לצרף אותו להודעה זו.'),'_blank','noopener')
  }catch(e){if(e?.name!=='AbortError')alert(e.message||'לא ניתן לשתף את ה־PDF')}
 }
