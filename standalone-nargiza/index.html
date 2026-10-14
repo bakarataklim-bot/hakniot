@@ -92,9 +92,10 @@ button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 13p
 
   <section class="pane hidden" id="pane-hours">
     <div class="card">
-      <h3>📅 שחזור מהיר — ספטמבר 2026</h3>
-      <div class="note warn">הזן כאן את השעות שיש לך לכל יום. אם היו שני מקטעים באותו יום, שמור את הראשון כאן ואת המקטע הנוסף דרך "הוסף מקטע שעות" למטה.</div>
-      <div class="actions"><button class="primary" id="buildSeptemberGrid">🗓️ פתח טבלת ספטמבר</button><button class="secondary" id="saveSeptemberGrid">💾 שמור את כל ספטמבר</button></div>
+      <h3>📅 טבלת שעות חודשית</h3>
+      <div class="note warn">בחר חודש, הזן שעות לכל יום ושמור. הנתונים של חודשים אחרים נשארים ללא שינוי. אם היו שני מקטעים באותו יום, שמור כאן את המקטע הראשון ואת הנוסף דרך "הוסף מקטע שעות" למטה.</div>
+      <label style="margin-top:10px">חודש לטבלה<input id="restoreMonth" type="month" value="2026-09"></label>
+      <div class="actions"><button class="primary" id="buildSeptemberGrid">🗓️ פתח טבלה</button><button class="secondary" id="saveSeptemberGrid">💾 שמור את החודש</button></div>
       <div id="septemberRestoreGrid" style="margin-top:10px"></div>
     </div>
     <div class="card">
@@ -378,33 +379,44 @@ async function renderSnapshots(){
 }
 
 
-function septemberDates(){
- const out=[];for(let d=2;d<=30;d++)out.push('2026-09-'+String(d).padStart(2,'0'));return out
+function restoreSelectedMonth(){
+ const value=$('restoreMonth')?.value||$('month')?.value||'2026-09';
+ return /^\\d{4}-\\d{2}$/.test(value)?value:'2026-09';
+}
+function restoreMonthDates(month){
+ const [year,mon]=month.split('-').map(Number),count=new Date(year,mon,0).getDate(),out=[];
+ for(let d=1;d<=count;d++)out.push(month+'-'+String(d).padStart(2,'0'));
+ return out;
 }
 function buildSeptemberRestoreGrid(){
  const root=$('septemberRestoreGrid');if(!root)return;
- const byDate={};state.hours.filter(h=>String(h.date).startsWith('2026-09')).forEach(h=>{if(!byDate[h.date])byDate[h.date]=h});
+ const month=restoreSelectedMonth(),byDate={};
+ state.hours.filter(h=>String(h.date).startsWith(month)).forEach(h=>{if(!byDate[h.date]||h._extraSegment) {if(!byDate[h.date]||!h._extraSegment)byDate[h.date]=h}});
+ const [year,mon]=month.split('-'),monthLabel=mon+'/'+year;
  root.innerHTML='<div class="restoreGrid"><div class="restoreRow restoreHead"><div>תאריך</div><div>התחלה</div><div>סיום</div><div>הערה</div><div>מאושר</div></div>'+
- septemberDates().map(date=>{const h=byDate[date]||{};return '<div class="restoreRow" data-sep-date="'+date+'"><div class="restoreDate">'+date.slice(8,10)+'/09</div><input data-sep-start type="text" inputmode="numeric" dir="ltr" placeholder="08:00" value="'+escapeHtml(h.start||'')+'"><input data-sep-end type="text" inputmode="numeric" dir="ltr" placeholder="16:00" value="'+escapeHtml(h.end||'')+'"><input class="restoreNote" data-sep-note type="text" placeholder="הערה" value="'+escapeHtml(h.note||'')+'"><input data-sep-approved type="checkbox" '+(h.approved?'checked':'')+'></div>'}).join('')+'</div>'
+ restoreMonthDates(month).map(date=>{const h=byDate[date]||{};return '<div class="restoreRow" data-sep-date="'+date+'"><div class="restoreDate">'+date.slice(8,10)+'/'+mon+'</div><input data-sep-start type="text" inputmode="numeric" dir="ltr" placeholder="08:00" value="'+escapeHtml(h.start||'')+'"><input data-sep-end type="text" inputmode="numeric" dir="ltr" placeholder="16:00" value="'+escapeHtml(h.end||'')+'"><input class="restoreNote" data-sep-note type="text" placeholder="הערה" value="'+escapeHtml(h.note||'')+'"><input data-sep-approved type="checkbox" '+(h.approved?'checked':'')+'></div>'}).join('')+'</div>';
+ $('buildSeptemberGrid').textContent='🗓️ פתח טבלת '+monthLabel;
+ $('saveSeptemberGrid').textContent='💾 שמור '+monthLabel;
  attachTimeTyping();
 }
 function saveSeptemberRestoreGrid(){
- const rows=[...document.querySelectorAll('[data-sep-date]')];if(!rows.length)return alert('פתח קודם את טבלת ספטמבר');
- const otherSegments=state.hours.filter(h=>!String(h.date).startsWith('2026-09') || h._extraSegment);
+ const month=restoreSelectedMonth(),rows=[...document.querySelectorAll('[data-sep-date]')];
+ if(!rows.length)return alert('פתח קודם את הטבלה של החודש שבחרת');
+ const extras=state.hours.filter(h=>String(h.date).startsWith(month)&&h._extraSegment);
+ const preserved=state.hours.filter(h=>!String(h.date).startsWith(month));
  const rebuilt=[];
  for(const row of rows){
-   const date=row.dataset.sepDate,start=normalizeTimeInput(row.querySelector('[data-sep-start]').value),end=normalizeTimeInput(row.querySelector('[data-sep-end]').value),note=row.querySelector('[data-sep-note]').value.trim(),approved=row.querySelector('[data-sep-approved]').checked;if(start)row.querySelector('[data-sep-start]').value=start;if(end)row.querySelector('[data-sep-end]').value=end;
+   const date=row.dataset.sepDate,start=normalizeTimeInput(row.querySelector('[data-sep-start]').value),end=normalizeTimeInput(row.querySelector('[data-sep-end]').value),note=row.querySelector('[data-sep-note]').value.trim(),approved=row.querySelector('[data-sep-approved]').checked;
+   if(start)row.querySelector('[data-sep-start]').value=start;if(end)row.querySelector('[data-sep-end]').value=end;
    if(!start&&!end&&!note)continue;
    if(!start||!end){alert('חסרה שעת התחלה או סיום בתאריך '+date);return}
    if(!(minBetween(start,end)>0)){alert('שעות לא תקינות בתאריך '+date);return}
-   rebuilt.push({id:uid(),date,start,end,note,approved,createdAt:Date.now(),restoreBatch:'2026-09'})
+   rebuilt.push({id:uid(),date,start,end,note,approved,createdAt:Date.now(),restoreBatch:month});
  }
- // preserve any extra segments added manually for September
- const extras=state.hours.filter(h=>String(h.date).startsWith('2026-09')&&h._extraSegment);
- state.hours=otherSegments.filter(h=>!String(h.date).startsWith('2026-09')).concat(rebuilt,extras);
- persist('restore-september-2026');renderHours();fillMonth('2026-09');renderHistory();alert('ספטמבר נשמר ✓\n'+rebuilt.length+' ימי עבודה נשמרו וחישוב השעות הנוספות עודכן.')
+ state.hours=preserved.concat(rebuilt,extras);
+ persist('restore-'+month);renderHours();fillMonth(month);renderHistory();
+ alert(month.slice(5,7)+'/'+month.slice(0,4)+' נשמר ✓\\n'+rebuilt.length+' ימי עבודה נשמרו וחישוב השעות הנוספות עודכן.');
 }
-
 let currentSignRequest=null,signatureDirty=false;
 
 function encodeSignRequest(obj){
@@ -545,7 +557,7 @@ function attachTimeTyping(){
  })
 }
 ['fullBase','weekends','holidays','vacation','sick','otherPlus','medical','economy','deductions','notes'].forEach(id=>$(id).addEventListener('input',calcForm));
-$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('sendForSignature').onclick=sendForSignature;$('duplicateMonth').onclick=duplicateNext;$('buildSeptemberGrid').onclick=buildSeptemberRestoreGrid;$('saveSeptemberGrid').onclick=saveSeptemberRestoreGrid;$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
+$('month').addEventListener('change',()=>fillMonth($('month').value));$('saveMonth').onclick=saveMonth;$('sendForSignature').onclick=sendForSignature;$('duplicateMonth').onclick=duplicateNext;$('buildSeptemberGrid').onclick=buildSeptemberRestoreGrid;$('saveSeptemberGrid').onclick=saveSeptemberRestoreGrid;$('restoreMonth').addEventListener('change',buildSeptemberRestoreGrid);$('addHour').onclick=addHour;$('addPayment').onclick=addPayment;$('saveDoc').onclick=saveDoc;$('exportBackup').onclick=exportBackup;$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackupFile(f);e.target.value=''};
 $('payDate').value=new Date().toISOString().slice(0,10);
 attachTimeTyping();
 if(location.hash.startsWith('#sign=')){
